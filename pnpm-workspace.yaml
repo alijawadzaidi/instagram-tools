@@ -1,0 +1,8 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Carried over from create-next-app (build scripts we don't auto-run)
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver

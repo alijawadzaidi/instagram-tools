@@ -1,0 +1,22 @@
+# Cloned third-party repos kept only as local reference for study.
+# Don't commit other people's code into our repo.
+Research/reference-repos/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# Work artifacts
+downloads/
+transcripts/
+*.mp4
+*.wav
+*.mp3

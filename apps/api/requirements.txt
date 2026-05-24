@@ -1,0 +1,12 @@
+# Core API (always needed)
+fastapi
+uvicorn[standard]
+pydantic-settings
+yt-dlp
+# Lets modern `X | None` type syntax work on Python 3.9 (prod uses 3.11+).
+eval_type_backport
+
+# Local transcription engine (dev default). Cloud engines are optional:
+#   pip install openai        # for TRANSCRIBE_ENGINE=openai
+#   pip install assemblyai    # for TRANSCRIBE_ENGINE=assemblyai
+faster-whisper
