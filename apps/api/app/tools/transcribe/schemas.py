@@ -26,6 +26,8 @@ class TranscriptResult(BaseModel):
     text: str
     segments: list[Segment] = []
     language: str | None = None
+    caption: str = ""
+    hashtags: list[str] = []
 
 
 class JobResponse(BaseModel):

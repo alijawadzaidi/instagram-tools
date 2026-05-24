@@ -18,6 +18,7 @@ class ReelSummaryModel(BaseModel):
     url: str
     thumbnail_url: str | None = None
     caption: str = ""
+    hashtags: list[str] = []
     view_count: int | None = None
 
 

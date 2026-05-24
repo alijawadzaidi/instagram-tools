@@ -1,4 +1,4 @@
-import { AudioLines, UserSearch, type LucideIcon } from "lucide-react";
+import { AudioLines, UserSearch, Hash, type LucideIcon } from "lucide-react";
 
 /**
  * The tool registry — the single source of truth for the whole app.
@@ -33,6 +33,13 @@ export const tools: Tool[] = [
     name: "Profile Reels",
     description: "Enter a username, browse their reels, and transcribe any of them.",
     icon: UserSearch,
+    status: "live",
+  },
+  {
+    slug: "hashtags",
+    name: "Hashtag Research",
+    description: "Analyze an account's most-used hashtags and the combinations they pair.",
+    icon: Hash,
     status: "live",
   },
   // Future tools land here, e.g.:

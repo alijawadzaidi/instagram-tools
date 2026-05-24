@@ -20,6 +20,8 @@ export interface TranscriptResult {
   text: string;
   segments: TranscriptSegment[];
   language?: string;
+  caption?: string;
+  hashtags?: string[];
 }
 
 export type JobStatus = "pending" | "running" | "done" | "error";
@@ -74,6 +76,7 @@ export interface ReelSummary {
   url: string;
   thumbnail_url: string | null;
   caption: string;
+  hashtags: string[];
   view_count: number | null;
 }
 
@@ -96,6 +99,60 @@ export function fetchProfileReels(
     method: "POST",
     body: JSON.stringify({ username, cursor: cursor ?? null, page_size: pageSize }),
   });
+}
+
+// --- downloads ---
+
+export interface QualityOption {
+  id: string; // "best" | a width like "720" | "audio"
+  label: string;
+  width: number | null;
+  height: number | null;
+  filesize: number | null;
+}
+
+export interface FormatsResponse {
+  shortcode: string;
+  qualities: QualityOption[];
+  audio_available: boolean;
+}
+
+export function fetchFormats(url: string): Promise<FormatsResponse> {
+  return http<FormatsResponse>("/tools/download/formats", {
+    method: "POST",
+    body: JSON.stringify({ url }),
+  });
+}
+
+/** Direct GET url for a single-reel download (browser saves via Content-Disposition). */
+export function downloadFileUrl(url: string, quality: string): string {
+  const q = new URLSearchParams({ url, quality });
+  return `${API_URL}/tools/download/file?${q.toString()}`;
+}
+
+/** Bulk download: POST urls, get a zip blob back, and save it. */
+export async function downloadZip(urls: string[], quality: string): Promise<void> {
+  const res = await fetch(`${API_URL}/tools/download/zip`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ urls, quality }),
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      detail = (await res.json()).detail ?? detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  const blob = await res.blob();
+  const objUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = objUrl;
+  a.download = "reels.zip";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(objUrl);
 }
 
 /**

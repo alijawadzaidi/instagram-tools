@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
+from .tools.download.router import router as download_router
 from .tools.profile.router import router as profile_router
 from .tools.transcribe.router import router as transcribe_router
 
@@ -31,3 +32,4 @@ def health() -> dict:
 
 app.include_router(transcribe_router)
 app.include_router(profile_router)
+app.include_router(download_router)

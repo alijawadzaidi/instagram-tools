@@ -7,6 +7,8 @@ import tempfile
 from ...config import settings
 from ...shared.audio import extract_audio
 from ...shared.downloader import download_video
+from ...shared import ig_extractor
+from ...shared.hashtags import extract_hashtags
 from .engines import get_engine
 
 
@@ -22,4 +24,10 @@ def transcribe_reel(url: str, engine_name: str | None = None) -> dict:
         video_path = download_video(url, tmp)
         audio_path = extract_audio(video_path, tmp)
         transcript = engine.transcribe(audio_path)
-        return transcript.to_dict()
+
+    result = transcript.to_dict()
+    # Caption + hashtags come free from the reel's metadata (no audio needed).
+    caption = ig_extractor.get_caption(url)
+    result["caption"] = caption
+    result["hashtags"] = extract_hashtags(caption)
+    return result

@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { DownloadControl } from "@/components/download-control";
+import { HashtagChips } from "@/components/hashtag-chips";
 import {
   Card,
   CardContent,
@@ -34,8 +36,21 @@ export default function TranscribePage() {
   const [status, setStatus] = React.useState<JobStatus | null>(null);
   const [result, setResult] = React.useState<TranscriptResult | null>(null);
   const [copied, setCopied] = React.useState(false);
+  const [downloadUrl, setDownloadUrl] = React.useState<string | null>(null);
 
   const isBusy = status === "pending" || status === "running";
+
+  // Debounce: only expose the download control (which fetches formats) once the
+  // user has stopped typing a valid URL — avoids hammering the formats endpoint.
+  React.useEffect(() => {
+    const trimmed = url.trim();
+    if (!INSTAGRAM_URL.test(trimmed)) {
+      setDownloadUrl(null);
+      return;
+    }
+    const t = setTimeout(() => setDownloadUrl(trimmed), 600);
+    return () => clearTimeout(t);
+  }, [url]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -114,6 +129,18 @@ export default function TranscribePage() {
         </CardContent>
       </Card>
 
+      {downloadUrl && (
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="text-base">Download this reel</CardTitle>
+            <CardDescription>Pick a quality, or grab the audio only.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DownloadControl url={downloadUrl} />
+          </CardContent>
+        </Card>
+      )}
+
       {result && (
         <Card className="mt-4">
           <CardHeader className="flex-row items-center justify-between space-y-0">
@@ -134,6 +161,21 @@ export default function TranscribePage() {
               value={result.text || "(No speech detected in this reel.)"}
               className="min-h-48 resize-y"
             />
+          </CardContent>
+        </Card>
+      )}
+
+      {result && (result.caption || (result.hashtags && result.hashtags.length > 0)) && (
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="text-base">Caption &amp; hashtags</CardTitle>
+            <CardDescription>How this creator wrote the post.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {result.caption && (
+              <Textarea readOnly value={result.caption} className="min-h-24 resize-y text-sm" />
+            )}
+            <HashtagChips hashtags={result.hashtags ?? []} />
           </CardContent>
         </Card>
       )}

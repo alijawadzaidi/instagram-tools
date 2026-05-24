@@ -25,7 +25,7 @@ def extract_shortcode(url: str) -> str | None:
     return m.group(1) if m else None
 
 
-def _via_graphql(shortcode: str, cookies: dict) -> str | None:
+def _graphql_media(shortcode: str, cookies: dict) -> dict:
     variables = {
         "shortcode": shortcode,
         "child_comment_count": 0,
@@ -40,8 +40,25 @@ def _via_graphql(shortcode: str, cookies: dict) -> str | None:
         + urllib.parse.quote(json.dumps(variables))
     )
     data = json.loads(ig_http.request(url, ig_http.auth_headers(cookies)))
-    media = (data.get("data") or {}).get("xdt_shortcode_media") or {}
-    return media.get("video_url")
+    return (data.get("data") or {}).get("xdt_shortcode_media") or {}
+
+
+def _via_graphql(shortcode: str, cookies: dict) -> str | None:
+    return _graphql_media(shortcode, cookies).get("video_url")
+
+
+def get_caption(url: str) -> str:
+    """Best-effort fetch of a reel's caption text (empty string on failure)."""
+    shortcode = extract_shortcode(url)
+    if not shortcode:
+        return ""
+    try:
+        cookies = ig_http.session_cookies(f"https://www.instagram.com/p/{shortcode}/")
+        media = _graphql_media(shortcode, cookies)
+    except Exception:
+        return ""
+    edges = (media.get("edge_media_to_caption") or {}).get("edges") or []
+    return edges[0]["node"]["text"] if edges else ""
 
 
 def _via_embed(shortcode: str) -> str | None:

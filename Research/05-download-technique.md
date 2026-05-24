@@ -52,6 +52,25 @@ Implemented in `apps/api/app/shared/ig_profile.py`; shared HTTP bits factored in
 `ig_http.py` (reused by the single-reel extractor too). Tool #2 lists the reels;
 transcription reuses the single-reel pipeline per selected reel.
 
+## Quality options for downloading — use yt-dlp (verified)
+For the **download** feature (both tools), we needed multiple qualities + audio.
+Findings from a live probe:
+- The no-login GraphQL path gives only a *single* `video_url`, and
+  `video_dash_manifest` is often **absent** (and its `has_audio` can be wrong).
+  So GraphQL alone can't drive quality options.
+- **yt-dlp** enumerates the real ladder (e.g. for a portrait reel: 360/540/720/1080
+  by width, plus an audio-only m4a) and auto-muxes video+audio / extracts audio via
+  ffmpeg. This is the canonical tool — we use it for downloads rather than
+  reinventing DASH parsing/muxing.
+
+Important: reels are **portrait**, so user-facing quality tracks **width**
+(1080/720/540/360), not height — we surface the resolutions yt-dlp actually reports.
+
+Implemented in `apps/api/app/shared/ig_download.py` + `app/tools/download/`:
+`POST /formats` (list qualities), `GET /file?url&quality` (stream one), `POST /zip`
+(bulk). Caveat: yt-dlp re-hits Instagram, so the hosted-IP/proxy concern below
+applies to downloads too.
+
 ## The honest caveat (unchanged)
 This is verified from a **residential IP** (a normal home/Mac connection). The
 *method* is what the public download sites use, but they pair it with

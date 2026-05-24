@@ -20,6 +20,7 @@ from dataclasses import dataclass
 
 from . import ig_http
 from .errors import NotFoundError, PrivateContentError, RateLimitedError
+from .hashtags import extract_hashtags
 
 _CLIPS_URL = "https://www.instagram.com/api/v1/clips/user/"
 
@@ -30,6 +31,7 @@ class ReelSummary:
     url: str
     thumbnail_url: str | None
     caption: str
+    hashtags: list[str]
     view_count: int | None
 
     def to_dict(self) -> dict:
@@ -38,6 +40,7 @@ class ReelSummary:
             "url": self.url,
             "thumbnail_url": self.thumbnail_url,
             "caption": self.caption,
+            "hashtags": self.hashtags,
             "view_count": self.view_count,
         }
 
@@ -85,9 +88,9 @@ def _resolve_user_id(username: str, cookies: dict) -> str:
     return user["id"]
 
 
-def _caption_of(media: dict) -> str:
+def _full_caption(media: dict) -> str:
     cap = media.get("caption")
-    return (cap.get("text") or "")[:200] if isinstance(cap, dict) else ""
+    return (cap.get("text") or "") if isinstance(cap, dict) else ""
 
 
 def _thumb_of(media: dict) -> str | None:
@@ -134,12 +137,14 @@ def get_reels_page(
         code = media.get("code")
         if not code:
             continue
+        full_caption = _full_caption(media)
         reels.append(
             ReelSummary(
                 shortcode=code,
                 url=f"https://www.instagram.com/reel/{code}/",
                 thumbnail_url=_thumb_of(media),
-                caption=_caption_of(media),
+                caption=full_caption[:280],  # truncated for display
+                hashtags=extract_hashtags(full_caption),  # from FULL caption
                 view_count=media.get("play_count") or media.get("view_count"),
             )
         )

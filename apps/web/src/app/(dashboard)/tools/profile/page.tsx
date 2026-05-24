@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { UserSearch, Loader2, Check, Play, Eye, Plus } from "lucide-react";
+import { UserSearch, Loader2, Check, Play, Eye, Plus, Download } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   fetchProfileReels,
   transcribeReel,
+  downloadZip,
   type ReelSummary,
   type JobStatus,
 } from "@/lib/api";
@@ -20,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { HashtagChips } from "@/components/hashtag-chips";
 
 type ReelState = {
   status: JobStatus | "idle";
@@ -46,6 +48,8 @@ export default function ProfileReelsPage() {
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [states, setStates] = React.useState<Record<string, ReelState>>({});
   const [transcribing, setTranscribing] = React.useState(false);
+  const [dlQuality, setDlQuality] = React.useState("best");
+  const [downloading, setDownloading] = React.useState(false);
 
   async function handleFind(e: React.FormEvent) {
     e.preventDefault();
@@ -91,7 +95,7 @@ export default function ProfileReelsPage() {
   }
 
   function toggle(shortcode: string) {
-    if (transcribing) return;
+    if (transcribing || downloading) return;
     setSelected((prev) => {
       const next = new Set(prev);
       next.has(shortcode) ? next.delete(shortcode) : next.add(shortcode);
@@ -146,6 +150,22 @@ export default function ProfileReelsPage() {
     toast.success(`Finished transcribing ${queue.length} reel(s).`);
   }
 
+  async function downloadSelected() {
+    const urls = reels.filter((r) => selected.has(r.shortcode)).map((r) => r.url);
+    if (urls.length === 0) return;
+    setDownloading(true);
+    toast.info(`Preparing a zip of ${urls.length} reel(s)… this can take a moment.`);
+    try {
+      await downloadZip(urls, dlQuality);
+      toast.success("Download ready.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Download failed.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  const busy = transcribing || downloading;
   const doneCount = Object.values(states).filter((s) => s.status === "done").length;
 
   return (
@@ -197,21 +217,48 @@ export default function ProfileReelsPage() {
               · {selected.size} selected{doneCount ? ` · ${doneCount} done` : ""}
               {cursor ? " · more available" : ""}
             </span>
-            <div className="ml-auto flex gap-2">
-              <Button variant="outline" size="sm" onClick={selectAll} disabled={transcribing}>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" onClick={selectAll} disabled={busy}>
                 Select all
               </Button>
-              <Button variant="outline" size="sm" onClick={clearSelection} disabled={transcribing}>
+              <Button variant="outline" size="sm" onClick={clearSelection} disabled={busy}>
                 Clear
               </Button>
-              <Button size="sm" onClick={transcribeSelected} disabled={transcribing || selected.size === 0}>
+              <select
+                value={dlQuality}
+                onChange={(e) => setDlQuality(e.target.value)}
+                disabled={busy}
+                className="border-input bg-background h-8 rounded-md border px-2 text-sm shadow-xs focus-visible:ring-2 focus-visible:outline-none"
+                aria-label="Download quality"
+              >
+                <option value="best">Best</option>
+                <option value="1080">1080p</option>
+                <option value="720">720p</option>
+                <option value="540">540p</option>
+                <option value="360">360p</option>
+                <option value="audio">Audio (MP3)</option>
+              </select>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={downloadSelected}
+                disabled={busy || selected.size === 0}
+              >
+                {downloading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Download className="size-4" />
+                )}
+                Download ({selected.size})
+              </Button>
+              <Button size="sm" onClick={transcribeSelected} disabled={busy || selected.size === 0}>
                 {transcribing ? (
                   <>
                     <Loader2 className="size-4 animate-spin" /> Transcribing…
                   </>
                 ) : (
                   <>
-                    <Play className="size-4" /> Transcribe selected ({selected.size})
+                    <Play className="size-4" /> Transcribe ({selected.size})
                   </>
                 )}
               </Button>
@@ -274,6 +321,11 @@ export default function ProfileReelsPage() {
                     <p className="text-muted-foreground line-clamp-2 text-xs">
                       {reel.caption || "(no caption)"}
                     </p>
+                    {reel.hashtags.length > 0 && (
+                      <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                        <HashtagChips hashtags={reel.hashtags} size="sm" />
+                      </div>
+                    )}
                     {state?.status === "done" && (
                       <p className="mt-2 max-h-28 overflow-y-auto rounded bg-muted p-2 text-xs">
                         {state.text || "(no speech detected)"}
