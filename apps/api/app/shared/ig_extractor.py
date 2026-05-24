@@ -47,6 +47,19 @@ def _via_graphql(shortcode: str, cookies: dict) -> str | None:
     return _graphql_media(shortcode, cookies).get("video_url")
 
 
+def get_cover(url: str) -> str:
+    """Return the reel's high-res cover image URL (display_url). Empty on failure."""
+    shortcode = extract_shortcode(url)
+    if not shortcode:
+        return ""
+    try:
+        cookies = ig_http.session_cookies(f"https://www.instagram.com/p/{shortcode}/")
+        media = _graphql_media(shortcode, cookies)
+    except Exception:
+        return ""
+    return media.get("display_url") or ""
+
+
 def get_caption(url: str) -> str:
     """Best-effort fetch of a reel's caption text (empty string on failure)."""
     shortcode = extract_shortcode(url)

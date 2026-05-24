@@ -78,6 +78,7 @@ export interface ReelSummary {
   caption: string;
   hashtags: string[];
   view_count: number | null;
+  taken_at: number | null; // unix timestamp posted
 }
 
 export interface ProfileReelsResponse {
@@ -98,6 +99,47 @@ export function fetchProfileReels(
   return http<ProfileReelsResponse>("/tools/profile/reels", {
     method: "POST",
     body: JSON.stringify({ username, cursor: cursor ?? null, page_size: pageSize }),
+  });
+}
+
+// --- profile info (overview) ---
+
+export interface ProfileInfo {
+  username: string;
+  full_name: string;
+  biography: string;
+  follower_count: number | null;
+  following_count: number | null;
+  post_count: number | null;
+  is_verified: boolean;
+  is_private: boolean;
+  profile_pic_url: string | null;
+  external_url: string | null;
+  category: string | null;
+}
+
+export function fetchProfileInfo(username: string): Promise<ProfileInfo> {
+  return http<ProfileInfo>("/tools/profile/info", {
+    method: "POST",
+    body: JSON.stringify({ username }),
+  });
+}
+
+/** GET url that streams an Instagram CDN image back as a download. */
+export function imageDownloadUrl(url: string, filename: string): string {
+  const q = new URLSearchParams({ url, filename });
+  return `${API_URL}/tools/download/image?${q.toString()}`;
+}
+
+export interface CoverResponse {
+  shortcode: string;
+  cover_url: string | null;
+}
+
+export function fetchCover(url: string): Promise<CoverResponse> {
+  return http<CoverResponse>("/tools/download/cover", {
+    method: "POST",
+    body: JSON.stringify({ url }),
   });
 }
 

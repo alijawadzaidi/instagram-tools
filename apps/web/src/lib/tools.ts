@@ -1,4 +1,13 @@
-import { AudioLines, UserSearch, Hash, type LucideIcon } from "lucide-react";
+import {
+  AudioLines,
+  UserSearch,
+  Hash,
+  IdCard,
+  Image,
+  TrendingUp,
+  FileDown,
+  type LucideIcon,
+} from "lucide-react";
 
 /**
  * The tool registry — the single source of truth for the whole app.
@@ -40,6 +49,34 @@ export const tools: Tool[] = [
     name: "Hashtag Research",
     description: "Analyze an account's most-used hashtags and the combinations they pair.",
     icon: Hash,
+    status: "live",
+  },
+  {
+    slug: "overview",
+    name: "Profile Overview",
+    description: "Audit any public account: followers, bio, and profile picture.",
+    icon: IdCard,
+    status: "live",
+  },
+  {
+    slug: "cover",
+    name: "Cover Downloader",
+    description: "Download the full-resolution cover image of any reel or post.",
+    icon: Image,
+    status: "live",
+  },
+  {
+    slug: "ranking",
+    name: "Top Reels",
+    description: "Rank an account's reels by views to see what performs best.",
+    icon: TrendingUp,
+    status: "live",
+  },
+  {
+    slug: "export",
+    name: "Bulk Export",
+    description: "Export a profile's reels (link, date, views, hashtags, caption) to CSV or Markdown.",
+    icon: FileDown,
     status: "live",
   },
   // Future tools land here, e.g.:

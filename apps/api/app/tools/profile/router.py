@@ -13,8 +13,13 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 
 from ...shared.errors import ToolError
-from ...shared.ig_profile import get_reels_page
-from .schemas import ProfileReelsRequest, ProfileReelsResponse
+from ...shared.ig_profile import get_profile, get_reels_page
+from .schemas import (
+    ProfileInfoRequest,
+    ProfileInfoResponse,
+    ProfileReelsRequest,
+    ProfileReelsResponse,
+)
 
 router = APIRouter(prefix="/tools/profile", tags=["profile"])
 
@@ -31,3 +36,11 @@ async def list_reels(req: ProfileReelsRequest) -> ProfileReelsResponse:
         reels=[r.to_dict() for r in page.reels],
         next_cursor=page.next_cursor,
     )
+
+
+@router.post("/info", response_model=ProfileInfoResponse)
+async def info(req: ProfileInfoRequest) -> ProfileInfoResponse:
+    try:
+        return ProfileInfoResponse(**get_profile(req.username).to_dict())
+    except ToolError as e:
+        raise HTTPException(status_code=e.http_status, detail=e.message) from e

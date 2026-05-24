@@ -33,6 +33,7 @@ class ReelSummary:
     caption: str
     hashtags: list[str]
     view_count: int | None
+    taken_at: int | None  # unix timestamp the reel was posted
 
     def to_dict(self) -> dict:
         return {
@@ -42,6 +43,7 @@ class ReelSummary:
             "caption": self.caption,
             "hashtags": self.hashtags,
             "view_count": self.view_count,
+            "taken_at": self.taken_at,
         }
 
 
@@ -64,7 +66,8 @@ def _decode_cursor(cursor: str) -> tuple[str, str]:
         raise NotFoundError("Invalid pagination cursor.") from e
 
 
-def _resolve_user_id(username: str, cookies: dict) -> str:
+def _fetch_web_profile(username: str, cookies: dict) -> dict:
+    """Return the raw `user` object from web_profile_info (public fields)."""
     url = (
         "https://www.instagram.com/api/v1/users/web_profile_info/?username="
         + urllib.parse.quote(username)
@@ -83,9 +86,52 @@ def _resolve_user_id(username: str, cookies: dict) -> str:
     user = (data.get("data") or {}).get("user")
     if not user or not user.get("id"):
         raise NotFoundError(f"No Instagram user named @{username}.")
+    return user
+
+
+def _resolve_user_id(username: str, cookies: dict) -> str:
+    user = _fetch_web_profile(username, cookies)
     if user.get("is_private"):
         raise PrivateContentError(f"@{username} is a private account.")
     return user["id"]
+
+
+@dataclass
+class ProfileInfo:
+    username: str
+    full_name: str
+    biography: str
+    follower_count: int | None
+    following_count: int | None
+    post_count: int | None
+    is_verified: bool
+    is_private: bool
+    profile_pic_url: str | None
+    external_url: str | None
+    category: str | None
+
+    def to_dict(self) -> dict:
+        return self.__dict__
+
+
+def get_profile(username: str) -> ProfileInfo:
+    """Public profile overview for @username (works even for private accounts)."""
+    username = username.lstrip("@").strip()
+    cookies = ig_http.session_cookies(f"https://www.instagram.com/{username}/")
+    u = _fetch_web_profile(username, cookies)
+    return ProfileInfo(
+        username=u.get("username") or username,
+        full_name=u.get("full_name") or "",
+        biography=u.get("biography") or "",
+        follower_count=(u.get("edge_followed_by") or {}).get("count"),
+        following_count=(u.get("edge_follow") or {}).get("count"),
+        post_count=(u.get("edge_owner_to_timeline_media") or {}).get("count"),
+        is_verified=bool(u.get("is_verified")),
+        is_private=bool(u.get("is_private")),
+        profile_pic_url=u.get("profile_pic_url_hd") or u.get("profile_pic_url"),
+        external_url=u.get("external_url"),
+        category=u.get("category_name") or u.get("business_category_name"),
+    )
 
 
 def _full_caption(media: dict) -> str:
@@ -146,6 +192,7 @@ def get_reels_page(
                 caption=full_caption[:280],  # truncated for display
                 hashtags=extract_hashtags(full_caption),  # from FULL caption
                 view_count=media.get("play_count") or media.get("view_count"),
+                taken_at=media.get("taken_at"),
             )
         )
 
