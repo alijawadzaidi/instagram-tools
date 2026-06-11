@@ -6,7 +6,9 @@
  * the job until it's done. See Architecture/02-transcriber-design.md.
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// All requests go through the Next.js BFF proxy at /api/proxy which validates
+// the auth session before forwarding to FastAPI with the internal service key.
+const API_URL = "/api/proxy";
 
 export type TranscribeEngine = "local_whisper" | "openai" | "assemblyai";
 

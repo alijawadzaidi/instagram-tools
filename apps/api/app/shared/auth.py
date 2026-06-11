@@ -1,0 +1,17 @@
+"""FastAPI dependency that enforces the internal service key.
+
+Every request must carry the X-Internal-Key header set by the Next.js BFF
+proxy. Direct calls from the browser (or anyone who doesn't know the key)
+are rejected with 401.
+"""
+
+from __future__ import annotations
+
+from fastapi import Header, HTTPException
+
+from ..config import settings
+
+
+async def require_internal_key(x_internal_key: str = Header(...)) -> None:
+    if not settings.internal_api_key or x_internal_key != settings.internal_api_key:
+        raise HTTPException(status_code=401, detail="Unauthorized")

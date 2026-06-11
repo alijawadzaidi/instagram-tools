@@ -19,11 +19,12 @@ import urllib.request
 import zipfile
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, Response
 from starlette.background import BackgroundTask
 
 from ...shared import ig_http
+from ...shared.auth import require_internal_key
 from ...shared.errors import ToolError
 from ...shared.ig_download import download_one, list_qualities
 from ...shared.ig_extractor import extract_shortcode, get_cover
@@ -38,7 +39,11 @@ from .schemas import (
 # Only proxy images from Instagram's own CDNs (prevents this from being an open proxy).
 _ALLOWED_IMAGE_HOSTS = ("cdninstagram.com", "fbcdn.net")
 
-router = APIRouter(prefix="/tools/download", tags=["download"])
+router = APIRouter(
+    prefix="/tools/download",
+    tags=["download"],
+    dependencies=[Depends(require_internal_key)],
+)
 
 
 @router.post("/formats", response_model=FormatsResponse)

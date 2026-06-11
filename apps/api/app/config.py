@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     # --- database ---
     database_url: str = ""
 
+    # --- internal auth ---
+    # Shared secret with the Next.js BFF proxy. Every proxied request must carry
+    # this in the X-Internal-Key header.
+    internal_api_key: str = ""
+
     # --- web/server ---
     # Comma-separated list of allowed CORS origins for the Next.js frontend.
     cors_origins: str = "http://localhost:3000"

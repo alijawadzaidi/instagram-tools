@@ -10,11 +10,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ...db.session import get_db
+from ...shared.auth import require_internal_key
 from ...shared.jobs import create_job, get_job, run_job
 from .schemas import JobResponse, TranscribeRequest
 from .service import transcribe_reel
 
-router = APIRouter(prefix="/tools/transcribe", tags=["transcribe"])
+router = APIRouter(
+    prefix="/tools/transcribe",
+    tags=["transcribe"],
+    dependencies=[Depends(require_internal_key)],
+)
 
 
 def _to_response(job) -> JobResponse:

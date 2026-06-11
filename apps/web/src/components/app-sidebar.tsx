@@ -2,14 +2,17 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Camera } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Camera, LogOut } from "lucide-react";
 
+import { authClient } from "@/lib/auth-client";
 import { tools, toolHref } from "@/lib/tools";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarHeader,
@@ -21,6 +24,14 @@ import {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+
+  async function handleSignOut() {
+    await authClient.signOut({
+      fetchOptions: { onSuccess: () => router.push("/sign-in") },
+    });
+  }
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -75,6 +86,37 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarRail />
+
+      {session && (
+        <SidebarFooter className="border-t p-3">
+          <div className="flex items-center gap-2">
+            {session.user.image ? (
+              <img
+                src={session.user.image}
+                alt={session.user.name ?? ""}
+                className="size-7 rounded-full object-cover"
+              />
+            ) : (
+              <div className="size-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                {session.user.name?.[0]?.toUpperCase() ?? "?"}
+              </div>
+            )}
+            <div className="flex-1 min-w-0 text-xs">
+              <p className="font-medium truncate">{session.user.name}</p>
+              <p className="text-muted-foreground truncate">{session.user.email}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 shrink-0"
+              onClick={handleSignOut}
+              title="Sign out"
+            >
+              <LogOut className="size-3.5" />
+            </Button>
+          </div>
+        </SidebarFooter>
+      )}
     </Sidebar>
   );
 }

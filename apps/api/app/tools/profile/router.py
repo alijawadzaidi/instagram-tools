@@ -10,8 +10,9 @@ synchronous. Transcribing selected reels reuses the /tools/transcribe flow.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from ...shared.auth import require_internal_key
 from ...shared.errors import ToolError
 from ...shared.ig_profile import get_profile, get_reels_page
 from .schemas import (
@@ -21,7 +22,11 @@ from .schemas import (
     ProfileReelsResponse,
 )
 
-router = APIRouter(prefix="/tools/profile", tags=["profile"])
+router = APIRouter(
+    prefix="/tools/profile",
+    tags=["profile"],
+    dependencies=[Depends(require_internal_key)],
+)
 
 
 @router.post("/reels", response_model=ProfileReelsResponse)
