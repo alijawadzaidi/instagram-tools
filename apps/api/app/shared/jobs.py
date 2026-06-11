@@ -1,62 +1,60 @@
-"""A tiny in-memory background-job store.
+"""Background-job store backed by PostgreSQL.
 
-Transcription can take a while, so we don't do it inside the HTTP request (that
-risks gateway timeouts — exactly what the ReelScribe reference hit). Instead the
-router creates a Job, kicks off the work in a background thread, and the client
-polls the Job until it's done.
-
-NOTE: in-memory = single instance only. When we scale to multiple backend
-instances, swap this for Redis. The public API (create_job / get_job / run_job)
-stays the same.
+Jobs survive server restarts and work across multiple instances.
+The public API (create_job / get_job / run_job) is the same as before —
+only the routers need to pass a db session now.
 """
 
 from __future__ import annotations
 
 import asyncio
-import uuid
-from dataclasses import dataclass, field
 from typing import Any, Callable
 
+from sqlalchemy.orm import Session
+
+from app.db.session import SessionLocal
+from app.models.job import Job
 from .errors import ToolError
 
 
-@dataclass
-class Job:
-    id: str
-    status: str = "pending"  # pending | running | done | error
-    result: dict[str, Any] | None = None
-    error_code: str | None = None
-    error: str | None = None
-
-
-_JOBS: dict[str, Job] = {}
-
-
-def create_job() -> Job:
-    job = Job(id=uuid.uuid4().hex)
-    _JOBS[job.id] = job
+def create_job(db: Session, tool: str, input_url: str | None = None) -> Job:
+    job = Job(tool=tool, input_url=input_url, status="pending")
+    db.add(job)
+    db.commit()
+    db.refresh(job)
     return job
 
 
-def get_job(job_id: str) -> Job | None:
-    return _JOBS.get(job_id)
+def get_job(db: Session, job_id: str) -> Job | None:
+    return db.get(Job, job_id)
 
 
-def run_job(job: Job, work: Callable[[], dict[str, Any]]) -> None:
-    """Run blocking `work()` in a thread and record the outcome on `job`."""
+def run_job(job_id: str, work: Callable[[], dict[str, Any]]) -> None:
+    """Run blocking `work()` in a thread and persist the outcome to the database."""
 
     async def _runner() -> None:
-        job.status = "running"
+        db = SessionLocal()
         try:
-            job.result = await asyncio.to_thread(work)
+            job = db.get(Job, job_id)
+            job.status = "running"
+            db.commit()
+
+            result = await asyncio.to_thread(work)
+
             job.status = "done"
+            job.result = result
+            db.commit()
         except ToolError as e:
             job.status = "error"
             job.error_code = e.code
             job.error = e.message
+            db.commit()
         except Exception as e:  # noqa: BLE001 - last-resort guard for the worker
             job.status = "error"
             job.error_code = "internal_error"
             job.error = f"Unexpected error: {e}"
+            db.commit()
+        finally:
+            db.close()
 
     asyncio.create_task(_runner())

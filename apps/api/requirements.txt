@@ -10,3 +10,8 @@ eval_type_backport
 #   pip install openai        # for TRANSCRIBE_ENGINE=openai
 #   pip install assemblyai    # for TRANSCRIBE_ENGINE=assemblyai
 faster-whisper
+
+# Database
+sqlalchemy
+psycopg2-binary
+alembic

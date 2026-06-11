@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     download_retries: int = 3
     download_timeout: int = 60
 
+    # --- database ---
+    database_url: str = ""
+
     # --- web/server ---
     # Comma-separated list of allowed CORS origins for the Next.js frontend.
     cors_origins: str = "http://localhost:3000"
