@@ -38,20 +38,43 @@ export interface Job {
   error?: string;
 }
 
+/**
+ * A failed backend call. Carries the backend's machine-readable `code` (from the
+ * global error handler — see Architecture/04) so callers and the QueryClient can
+ * branch on it (e.g. retry only `rate_limited`) instead of string-matching.
+ */
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+
+  /** Transient failures worth a retry; client (4xx) errors are not. */
+  get retryable(): boolean {
+    return this.code === "rate_limited" || this.status >= 500;
+  }
+}
+
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     headers: { "Content-Type": "application/json" },
     ...init,
   });
   if (!res.ok) {
-    let detail = res.statusText;
+    let code = "error";
+    let message = res.statusText;
     try {
       const body = await res.json();
-      detail = body.message ?? body.detail ?? body.error ?? detail;
+      message = body.message ?? body.detail ?? body.error ?? message;
+      if (typeof body.code === "string") code = body.code;
     } catch {
       // non-JSON error body; keep statusText
     }
-    throw new Error(detail);
+    throw new ApiError(res.status, code, message);
   }
   return res.json() as Promise<T>;
 }

@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { fetchFormats, downloadFileUrl, type QualityOption } from "@/lib/api";
+import { downloadFileUrl, type QualityOption } from "@/lib/api";
+import { formatsQuery } from "@/queries/formats";
 import { Button } from "@/components/ui/button";
 
 const DEFAULT_QUALITIES: QualityOption[] = [
@@ -19,32 +21,20 @@ function prettySize(bytes: number | null): string {
 
 /** Quality dropdown + download button for a single reel URL. */
 export function DownloadControl({ url }: { url: string }) {
-  const [qualities, setQualities] = React.useState<QualityOption[]>(DEFAULT_QUALITIES);
-  const [audioAvailable, setAudioAvailable] = React.useState(false);
+  const { data, isFetching: loadingFormats } = useQuery(formatsQuery(url));
   const [selected, setSelected] = React.useState("best");
-  const [loadingFormats, setLoadingFormats] = React.useState(false);
 
-  // Enrich the dropdown with the reel's actual resolutions once we have a URL.
-  React.useEffect(() => {
-    let cancelled = false;
-    setQualities(DEFAULT_QUALITIES);
-    setAudioAvailable(false);
+  // Reset the choice when the reel changes (adjust-state-on-prop-change, the
+  // React-recommended alternative to an effect). Defaults cover failures —
+  // Best/Audio still work via the yt-dlp fallback.
+  const [prevUrl, setPrevUrl] = React.useState(url);
+  if (url !== prevUrl) {
+    setPrevUrl(url);
     setSelected("best");
-    setLoadingFormats(true);
-    fetchFormats(url)
-      .then((res) => {
-        if (cancelled) return;
-        setQualities(res.qualities.length ? res.qualities : DEFAULT_QUALITIES);
-        setAudioAvailable(res.audio_available);
-      })
-      .catch(() => {
-        /* keep defaults; Best/Audio still work via yt-dlp fallback */
-      })
-      .finally(() => !cancelled && setLoadingFormats(false));
-    return () => {
-      cancelled = true;
-    };
-  }, [url]);
+  }
+
+  const qualities = data?.qualities.length ? data.qualities : DEFAULT_QUALITIES;
+  const audioAvailable = data?.audio_available ?? false;
 
   function handleDownload() {
     const a = document.createElement("a");

@@ -1,14 +1,16 @@
 "use client";
 
 import * as React from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { AudioLines, Copy, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
-  transcribeReel,
+  ApiError,
+  startTranscription,
   type JobStatus,
-  type TranscriptResult,
 } from "@/lib/api";
+import { jobQuery } from "@/queries/jobs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,46 +35,56 @@ const STATUS_LABEL: Record<JobStatus, string> = {
 
 export default function TranscribePage() {
   const [url, setUrl] = React.useState("");
-  const [status, setStatus] = React.useState<JobStatus | null>(null);
-  const [result, setResult] = React.useState<TranscriptResult | null>(null);
+  const [jobId, setJobId] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState(false);
   const [downloadUrl, setDownloadUrl] = React.useState<string | null>(null);
 
+  // POST to start the job; the polling query (below) takes over from its id.
+  const startJob = useMutation({
+    mutationFn: (reelUrl: string) => startTranscription(reelUrl),
+    onSuccess: (job) => setJobId(job.job_id),
+    onError: (err) =>
+      toast.error(err instanceof ApiError ? err.message : "Something went wrong."),
+  });
+
+  const jobQ = useQuery(jobQuery(jobId));
+
+  const status: JobStatus | null = startJob.isPending
+    ? "pending"
+    : (jobQ.data?.status ?? null);
   const isBusy = status === "pending" || status === "running";
+  const result =
+    jobQ.data?.status === "done" ? (jobQ.data.result ?? null) : null;
+
+  // React to terminal job states once each.
+  React.useEffect(() => {
+    if (jobQ.data?.status === "error") {
+      toast.error(jobQ.data.error ?? "Transcription failed.");
+    } else if (jobQ.data?.status === "done" && !jobQ.data.result?.text?.trim()) {
+      toast.info("Transcription finished, but no speech was detected.");
+    }
+  }, [jobQ.data?.status, jobQ.data?.error, jobQ.data?.result?.text]);
 
   // Debounce: only expose the download control (which fetches formats) once the
   // user has stopped typing a valid URL — avoids hammering the formats endpoint.
+  // The state update lives in the timer callback (not the effect body) so it's
+  // off the synchronous render path. Invalid input clears immediately (0ms).
   React.useEffect(() => {
     const trimmed = url.trim();
-    if (!INSTAGRAM_URL.test(trimmed)) {
-      setDownloadUrl(null);
-      return;
-    }
-    const t = setTimeout(() => setDownloadUrl(trimmed), 600);
+    const valid = INSTAGRAM_URL.test(trimmed);
+    const t = setTimeout(() => setDownloadUrl(valid ? trimmed : null), valid ? 600 : 0);
     return () => clearTimeout(t);
   }, [url]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = url.trim();
     if (!INSTAGRAM_URL.test(trimmed)) {
       toast.error("That doesn't look like an Instagram reel/post link.");
       return;
     }
-
-    setResult(null);
-    setStatus("pending");
-    try {
-      const res = await transcribeReel(trimmed, { onStatus: setStatus });
-      setResult(res);
-      setStatus("done");
-      if (!res.text.trim()) {
-        toast.info("Transcription finished, but no speech was detected.");
-      }
-    } catch (err) {
-      setStatus("error");
-      toast.error(err instanceof Error ? err.message : "Something went wrong.");
-    }
+    setJobId(null);
+    startJob.mutate(trimmed);
   }
 
   async function handleCopy() {

@@ -65,8 +65,14 @@ Full annotated trees: `Research/06-restructure/06-proposed-structure.md` §1–2
 0. ✅ **Hygiene + sharp edges** (done 2026-06-13) — global error handler,
    plain-`def` handlers, pinned deps, logging + request IDs, fail-fast
    settings; proxy hardening (all methods, TTL session cache, timeout/abort).
-1. **TanStack Query layer** — over the existing `api.ts`; shared
-   profile-reels/jobs query factories; kills duplicate scrapes + polling loop.
+1. ✅ **TanStack Query layer** (done 2026-06-13) — `QueryProvider` + typed
+   `ApiError`; `src/queries/{profile-reels,profile-info,jobs,formats}.ts`
+   factories over the existing `api.ts`; `useProfileReelsSearch` collapses the
+   handleFind/loadMore/de-dupe block that was copy-pasted across 4 pages into
+   one shared infinite query; transcribe + DownloadControl now poll/fetch via
+   query (no more hand-rolled loop). Also fixed pre-existing
+   set-state-in-effect lint debt (use-mobile → useSyncExternalStore) so
+   `next build` is green.
 2. **Feature modules + shared components** — thin pages, `meta.ts` registry,
    extract the 8 duplicated components/utils; ESLint zones land here.
 3. **Generated client** — `packages/api-client`, delete `lib/api.ts`,

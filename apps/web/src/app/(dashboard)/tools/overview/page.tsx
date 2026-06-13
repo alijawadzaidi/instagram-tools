@@ -1,10 +1,13 @@
 "use client";
 
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { IdCard, Loader2, BadgeCheck, Lock, Download, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
-import { fetchProfileInfo, imageDownloadUrl, type ProfileInfo } from "@/lib/api";
+import { ApiError, imageDownloadUrl } from "@/lib/api";
+import { profileInfoQuery } from "@/queries/profile-info";
+import { normalizeUsername } from "@/queries/profile-reels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,22 +36,20 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 export default function ProfileOverviewPage() {
   const [username, setUsername] = React.useState("");
-  const [loading, setLoading] = React.useState(false);
-  const [info, setInfo] = React.useState<ProfileInfo | null>(null);
+  const [activeUser, setActiveUser] = React.useState("");
 
-  async function handleFind(e: React.FormEvent) {
+  const { data: info, isLoading, error } = useQuery(profileInfoQuery(activeUser));
+
+  React.useEffect(() => {
+    if (!error) return;
+    toast.error(error instanceof ApiError ? error.message : "Couldn't load that profile.");
+  }, [error]);
+
+  function handleFind(e: React.FormEvent) {
     e.preventDefault();
-    const u = username.trim().replace(/^@/, "");
+    const u = normalizeUsername(username);
     if (!u) return;
-    setLoading(true);
-    setInfo(null);
-    try {
-      setInfo(await fetchProfileInfo(u));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't load that profile.");
-    } finally {
-      setLoading(false);
-    }
+    setActiveUser(u);
   }
 
   function downloadPic() {
@@ -88,12 +89,12 @@ export default function ProfileOverviewPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="username"
-                disabled={loading}
+                disabled={isLoading}
                 className="pl-7"
               />
             </div>
-            <Button type="submit" disabled={loading || !username.trim()}>
-              {loading ? <Loader2 className="size-4 animate-spin" /> : <IdCard className="size-4" />}
+            <Button type="submit" disabled={isLoading || !username.trim()}>
+              {isLoading ? <Loader2 className="size-4 animate-spin" /> : <IdCard className="size-4" />}
               Look up
             </Button>
           </form>

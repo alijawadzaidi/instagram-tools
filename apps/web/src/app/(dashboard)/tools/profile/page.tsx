@@ -5,12 +5,11 @@ import { UserSearch, Loader2, Check, Play, Eye, Plus, Download } from "lucide-re
 import { toast } from "sonner";
 
 import {
-  fetchProfileReels,
   transcribeReel,
   downloadZip,
-  type ReelSummary,
   type JobStatus,
 } from "@/lib/api";
+import { useProfileReelsSearch } from "@/hooks/use-profile-reels-search";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -39,59 +38,32 @@ function formatViews(n: number | null): string | null {
 }
 
 export default function ProfileReelsPage() {
-  const [username, setUsername] = React.useState("");
-  const [activeUser, setActiveUser] = React.useState("");
-  const [loading, setLoading] = React.useState(false);
-  const [loadingMore, setLoadingMore] = React.useState(false);
-  const [cursor, setCursor] = React.useState<string | null>(null);
-  const [reels, setReels] = React.useState<ReelSummary[]>([]);
+  const {
+    username,
+    setUsername,
+    activeUser,
+    reels,
+    isLoading: loading,
+    isLoadingMore: loadingMore,
+    hasMore,
+    loadMore,
+    onSubmit,
+  } = useProfileReelsSearch();
+
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [states, setStates] = React.useState<Record<string, ReelState>>({});
   const [transcribing, setTranscribing] = React.useState(false);
   const [dlQuality, setDlQuality] = React.useState("best");
   const [downloading, setDownloading] = React.useState(false);
 
-  async function handleFind(e: React.FormEvent) {
-    e.preventDefault();
-    const u = username.trim().replace(/^@/, "");
-    if (!u) return;
-
-    setLoading(true);
-    setReels([]);
+  // A new search invalidates the per-reel selection/transcription state.
+  // Adjust-on-change during render (React's recommended alternative to an
+  // effect that just resets state when a value changes).
+  const [prevUser, setPrevUser] = React.useState(activeUser);
+  if (activeUser !== prevUser) {
+    setPrevUser(activeUser);
     setSelected(new Set());
     setStates({});
-    setCursor(null);
-    setActiveUser(u);
-    try {
-      const res = await fetchProfileReels(u); // first page
-      setReels(res.reels);
-      setCursor(res.next_cursor);
-      if (res.reels.length === 0) {
-        toast.info(`No reels found for @${u}.`);
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't load that profile.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadMore() {
-    if (!cursor || !activeUser) return;
-    setLoadingMore(true);
-    try {
-      const res = await fetchProfileReels(activeUser, cursor);
-      // De-dupe defensively in case Instagram repeats an item across pages.
-      setReels((prev) => {
-        const seen = new Set(prev.map((r) => r.shortcode));
-        return [...prev, ...res.reels.filter((r) => !seen.has(r.shortcode))];
-      });
-      setCursor(res.next_cursor);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't load more reels.");
-    } finally {
-      setLoadingMore(false);
-    }
   }
 
   function toggle(shortcode: string) {
@@ -188,7 +160,7 @@ export default function ProfileReelsPage() {
           <CardDescription>Public accounts only (e.g. natgeo).</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleFind} className="flex flex-col gap-3 sm:flex-row">
+          <form onSubmit={onSubmit} className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
               <span className="text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 text-sm">
                 @
@@ -215,7 +187,7 @@ export default function ProfileReelsPage() {
             <span className="text-sm font-medium">{reels.length} loaded</span>
             <span className="text-muted-foreground text-sm">
               · {selected.size} selected{doneCount ? ` · ${doneCount} done` : ""}
-              {cursor ? " · more available" : ""}
+              {hasMore ? " · more available" : ""}
             </span>
             <div className="ml-auto flex flex-wrap items-center gap-2">
               <Button variant="outline" size="sm" onClick={selectAll} disabled={busy}>
@@ -340,11 +312,11 @@ export default function ProfileReelsPage() {
             })}
           </div>
 
-          {cursor && (
+          {hasMore && (
             <div className="mt-6 flex justify-center">
               <Button
                 variant="outline"
-                onClick={loadMore}
+                onClick={() => loadMore()}
                 disabled={loadingMore || transcribing}
               >
                 {loadingMore ? (

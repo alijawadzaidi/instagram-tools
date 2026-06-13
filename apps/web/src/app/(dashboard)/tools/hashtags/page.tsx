@@ -4,8 +4,8 @@ import * as React from "react";
 import { Hash, Loader2, Plus, Copy, Info } from "lucide-react";
 import { toast } from "sonner";
 
-import { fetchProfileReels, type ReelSummary } from "@/lib/api";
 import { analyzeHashtags } from "@/lib/hashtags";
+import { useProfileReelsSearch } from "@/hooks/use-profile-reels-search";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -27,50 +27,18 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 }
 
 export default function HashtagResearchPage() {
-  const [username, setUsername] = React.useState("");
-  const [activeUser, setActiveUser] = React.useState("");
-  const [reels, setReels] = React.useState<ReelSummary[]>([]);
-  const [cursor, setCursor] = React.useState<string | null>(null);
-  const [loading, setLoading] = React.useState(false);
-  const [loadingMore, setLoadingMore] = React.useState(false);
+  const {
+    username,
+    setUsername,
+    reels,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
+    onSubmit,
+  } = useProfileReelsSearch();
 
   const analysis = React.useMemo(() => analyzeHashtags(reels), [reels]);
-
-  async function handleFind(e: React.FormEvent) {
-    e.preventDefault();
-    const u = username.trim().replace(/^@/, "");
-    if (!u) return;
-    setLoading(true);
-    setReels([]);
-    setCursor(null);
-    setActiveUser(u);
-    try {
-      const res = await fetchProfileReels(u);
-      setReels(res.reels);
-      setCursor(res.next_cursor);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't load that profile.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadMore() {
-    if (!cursor || !activeUser) return;
-    setLoadingMore(true);
-    try {
-      const res = await fetchProfileReels(activeUser, cursor);
-      setReels((prev) => {
-        const seen = new Set(prev.map((r) => r.shortcode));
-        return [...prev, ...res.reels.filter((r) => !seen.has(r.shortcode))];
-      });
-      setCursor(res.next_cursor);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't load more.");
-    } finally {
-      setLoadingMore(false);
-    }
-  }
 
   async function copyTop(n: number) {
     const tags = analysis.top.slice(0, n).map((t) => t.tag);
@@ -111,7 +79,7 @@ export default function HashtagResearchPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleFind} className="flex flex-col gap-3 sm:flex-row">
+          <form onSubmit={onSubmit} className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
               <span className="text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 text-sm">
                 @
@@ -120,12 +88,12 @@ export default function HashtagResearchPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="username"
-                disabled={loading}
+                disabled={isLoading}
                 className="pl-7"
               />
             </div>
-            <Button type="submit" disabled={loading || !username.trim()}>
-              {loading ? <Loader2 className="size-4 animate-spin" /> : <Hash className="size-4" />}
+            <Button type="submit" disabled={isLoading || !username.trim()}>
+              {isLoading ? <Loader2 className="size-4 animate-spin" /> : <Hash className="size-4" />}
               Analyze
             </Button>
           </form>
@@ -221,10 +189,10 @@ export default function HashtagResearchPage() {
             </Card>
           </div>
 
-          {cursor && (
+          {hasMore && (
             <div className="mt-6 flex justify-center">
-              <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
-                {loadingMore ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+              <Button variant="outline" onClick={() => loadMore()} disabled={isLoadingMore}>
+                {isLoadingMore ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
                 Load more reels (improves the analysis)
               </Button>
             </div>
