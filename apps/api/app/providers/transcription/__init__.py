@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from ....shared.errors import EngineError
+from app.core.errors import EngineError
+
 from .base import Engine, Segment, Transcript
 
 _REGISTRY = {
-    "local_whisper": "app.tools.transcribe.engines.local_whisper:LocalWhisperEngine",
-    "openai": "app.tools.transcribe.engines.openai:OpenAIEngine",
-    "assemblyai": "app.tools.transcribe.engines.assemblyai:AssemblyAIEngine",
+    "local_whisper": "app.providers.transcription.local_whisper:LocalWhisperEngine",
+    "openai": "app.providers.transcription.openai:OpenAIEngine",
+    "assemblyai": "app.providers.transcription.assemblyai:AssemblyAIEngine",
 }
 
 # Engines are created lazily and cached (model loading / clients are expensive).

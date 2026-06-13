@@ -92,8 +92,33 @@ Full annotated trees: `Research/06-restructure/06-proposed-structure.md` §1–2
    the error interceptor throws). Root `pnpm gen` (export → regenerate) +
    `pnpm gen:check` drift guard. Generated code committed. Dropped the TanStack
    plugin — `src/queries/*` wrap the SDK so generated options would be unused.
-4. **Backend restructure** — split `shared/`, promote providers, httpx-async,
-   fixture tests.
+4. ✅ **Backend restructure** (done 2026-06-13) — `shared/` dissolved into
+   `core/` (config, db, errors, auth, logging), `integrations/instagram/`
+   (http, **session w/ cached cookie warmup**, extractor, profile, download,
+   hashtags), `media/`, `providers/transcription/` (engines promoted), and
+   `jobs/`. DB engine now created lazily (out of import time). Mandatory
+   `service.py` per tool; routers **auto-discovered** in `main.py` (adding a
+   tool edits no shared file). `tests/` suite (30 tests) covers the
+   deterministic parsing/wiring; `requirements-dev.txt` pins pytest+ruff.
+   Client regen = identical exports (only registration order changed), so the
+   frontend was untouched.
+
+   **Deferred from this phase, on merit (not effort):**
+   - *httpx-async rewrite of the IG client* — Phase 0's plain-`def` handlers
+     already removed the event-loop outage class; the async rewrite only adds
+     connection pooling and would rewrite the most fragile, hardest-to-test code
+     with no way to verify against live Instagram from here (blocked IP, no
+     cookies). Do it when IG access is available to test.
+   - *Splitting `cover`/`export` into separate backend modules (decision #13)* —
+     on inspection `download` is one coherent capability (formats/file/zip/cover/
+     image) and the `/image` proxy is shared by the overview tool, so orphaning
+     it into `cover/` is worse coupling. The frontend cover/export tools compose
+     over `download` like hashtags composes over profile. Refined decision #13.
+   - *Nested settings groups* — would rename deployment env vars (DATABASE_URL,
+     etc.) for little gain; kept flat names. The real defect (import-time engine)
+     is fixed via lazy `core/db.py`.
+   - *Recorded-fixture IG tests* — need real captured responses we don't have;
+     replaced with deterministic unit tests for the pure parsing logic.
 5. **Jobs platform + AI readiness** — durable queue, reaper, per-user cost
    columns + usage ledger (paid product is planned — this is billing
    foundation, not bookkeeping), quota hooks on enqueue, `providers/llm/` with

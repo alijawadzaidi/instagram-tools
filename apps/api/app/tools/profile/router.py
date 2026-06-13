@@ -16,8 +16,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from ...shared.auth import require_internal_key
-from ...shared.ig_profile import get_profile, get_reels_page
+from app.core.auth import require_internal_key
+
+from . import service
 from .schemas import (
     ProfileInfoRequest,
     ProfileInfoResponse,
@@ -34,7 +35,7 @@ router = APIRouter(
 
 @router.post("/reels", response_model=ProfileReelsResponse)
 def list_reels(req: ProfileReelsRequest) -> ProfileReelsResponse:
-    page = get_reels_page(req.username, cursor=req.cursor, page_size=req.page_size)
+    page = service.list_reels(req.username, req.cursor, req.page_size)
     return ProfileReelsResponse(
         username=req.username.lstrip("@").strip(),
         reels=[r.to_dict() for r in page.reels],
@@ -44,4 +45,4 @@ def list_reels(req: ProfileReelsRequest) -> ProfileReelsResponse:
 
 @router.post("/info", response_model=ProfileInfoResponse)
 def info(req: ProfileInfoRequest) -> ProfileInfoResponse:
-    return ProfileInfoResponse(**get_profile(req.username).to_dict())
+    return ProfileInfoResponse(**service.get_profile_info(req.username).to_dict())

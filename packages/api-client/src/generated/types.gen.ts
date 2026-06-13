@@ -383,111 +383,6 @@ export type DefaultHealthResponses = {
 
 export type DefaultHealthResponse = DefaultHealthResponses[keyof DefaultHealthResponses];
 
-export type TranscribeStartData = {
-    body: TranscribeRequest;
-    path?: never;
-    query?: never;
-    url: '/tools/transcribe';
-};
-
-export type TranscribeStartErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type TranscribeStartError = TranscribeStartErrors[keyof TranscribeStartErrors];
-
-export type TranscribeStartResponses = {
-    /**
-     * Successful Response
-     */
-    200: JobResponse;
-};
-
-export type TranscribeStartResponse = TranscribeStartResponses[keyof TranscribeStartResponses];
-
-export type TranscribeStatusData = {
-    body?: never;
-    path: {
-        /**
-         * Job Id
-         */
-        job_id: string;
-    };
-    query?: never;
-    url: '/tools/transcribe/{job_id}';
-};
-
-export type TranscribeStatusErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type TranscribeStatusError = TranscribeStatusErrors[keyof TranscribeStatusErrors];
-
-export type TranscribeStatusResponses = {
-    /**
-     * Successful Response
-     */
-    200: JobResponse;
-};
-
-export type TranscribeStatusResponse = TranscribeStatusResponses[keyof TranscribeStatusResponses];
-
-export type ProfileListReelsData = {
-    body: ProfileReelsRequest;
-    path?: never;
-    query?: never;
-    url: '/tools/profile/reels';
-};
-
-export type ProfileListReelsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ProfileListReelsError = ProfileListReelsErrors[keyof ProfileListReelsErrors];
-
-export type ProfileListReelsResponses = {
-    /**
-     * Successful Response
-     */
-    200: ProfileReelsResponse;
-};
-
-export type ProfileListReelsResponse = ProfileListReelsResponses[keyof ProfileListReelsResponses];
-
-export type ProfileInfoData = {
-    body: ProfileInfoRequest;
-    path?: never;
-    query?: never;
-    url: '/tools/profile/info';
-};
-
-export type ProfileInfoErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ProfileInfoError = ProfileInfoErrors[keyof ProfileInfoErrors];
-
-export type ProfileInfoResponses = {
-    /**
-     * Successful Response
-     */
-    200: ProfileInfoResponse;
-};
-
-export type ProfileInfoResponse2 = ProfileInfoResponses[keyof ProfileInfoResponses];
-
 export type DownloadFormatsData = {
     body: FormatsRequest;
     path?: never;
@@ -624,3 +519,108 @@ export type DownloadZipReelsResponses = {
      */
     200: unknown;
 };
+
+export type ProfileListReelsData = {
+    body: ProfileReelsRequest;
+    path?: never;
+    query?: never;
+    url: '/tools/profile/reels';
+};
+
+export type ProfileListReelsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProfileListReelsError = ProfileListReelsErrors[keyof ProfileListReelsErrors];
+
+export type ProfileListReelsResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProfileReelsResponse;
+};
+
+export type ProfileListReelsResponse = ProfileListReelsResponses[keyof ProfileListReelsResponses];
+
+export type ProfileInfoData = {
+    body: ProfileInfoRequest;
+    path?: never;
+    query?: never;
+    url: '/tools/profile/info';
+};
+
+export type ProfileInfoErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProfileInfoError = ProfileInfoErrors[keyof ProfileInfoErrors];
+
+export type ProfileInfoResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProfileInfoResponse;
+};
+
+export type ProfileInfoResponse2 = ProfileInfoResponses[keyof ProfileInfoResponses];
+
+export type TranscribeStartData = {
+    body: TranscribeRequest;
+    path?: never;
+    query?: never;
+    url: '/tools/transcribe';
+};
+
+export type TranscribeStartErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type TranscribeStartError = TranscribeStartErrors[keyof TranscribeStartErrors];
+
+export type TranscribeStartResponses = {
+    /**
+     * Successful Response
+     */
+    200: JobResponse;
+};
+
+export type TranscribeStartResponse = TranscribeStartResponses[keyof TranscribeStartResponses];
+
+export type TranscribeStatusData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/tools/transcribe/{job_id}';
+};
+
+export type TranscribeStatusErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type TranscribeStatusError = TranscribeStatusErrors[keyof TranscribeStatusErrors];
+
+export type TranscribeStatusResponses = {
+    /**
+     * Successful Response
+     */
+    200: JobResponse;
+};
+
+export type TranscribeStatusResponse = TranscribeStatusResponses[keyof TranscribeStatusResponses];

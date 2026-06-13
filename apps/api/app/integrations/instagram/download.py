@@ -15,9 +15,10 @@ from __future__ import annotations
 
 import os
 
-from ..config import settings
-from .errors import DownloadError, NotFoundError, PrivateContentError, RateLimitedError
-from .ig_extractor import extract_shortcode
+from app.core.config import settings
+from app.core.errors import DownloadError, NotFoundError, PrivateContentError, RateLimitedError
+
+from .extractor import extract_shortcode
 
 
 def _base_opts() -> dict:

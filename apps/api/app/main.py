@@ -1,32 +1,50 @@
-"""FastAPI entrypoint. Mounts every tool's router.
+"""FastAPI entrypoint.
 
-To add a tool: create app/tools/<tool>/router.py with an APIRouter named
-`router`, then include it here. The shared/ helpers (downloader, audio, jobs,
-errors) are available to all tools. Raise ToolError subclasses for expected
-failures — the global handler below turns them into HTTP responses; routers
-never need their own try/except.
+To add a tool: create app/tools/<slug>/ with router.py (an APIRouter named
+`router`), schemas.py, and service.py. Routers are auto-discovered below — no
+edit to this file needed. Raise ToolError subclasses for expected failures; the
+global handler turns them into HTTP responses, so routers need no try/except.
+
+Layers: core/ (config, db, errors, auth, logging) · integrations/ (instagram) ·
+media/ · providers/ (transcription, …) · jobs/ · tools/<slug>/.
 """
 
 from __future__ import annotations
 
+import importlib
 import logging
+import pkgutil
 import time
 import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
-from .config import settings
-from .shared.errors import ToolError
-from .shared.logging_setup import setup_logging
-from .tools.download.router import router as download_router
-from .tools.profile.router import router as profile_router
-from .tools.transcribe.router import router as transcribe_router
+from app import tools
+from app.core.config import settings
+from app.core.errors import ToolError
+from app.core.logging import setup_logging
 
 log = logging.getLogger("app.request")
+
+
+def _discover_tool_routers() -> list[APIRouter]:
+    """Every app/tools/<slug>/router.py that exports `router`, in import order."""
+    routers: list[APIRouter] = []
+    for mod in pkgutil.iter_modules(tools.__path__):
+        if not mod.ispkg:
+            continue
+        try:
+            module = importlib.import_module(f"app.tools.{mod.name}.router")
+        except ModuleNotFoundError:
+            continue
+        router = getattr(module, "router", None)
+        if isinstance(router, APIRouter):
+            routers.append(router)
+    return routers
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -106,6 +124,5 @@ def health() -> dict:
     return {"status": "ok", "engine": settings.transcribe_engine}
 
 
-app.include_router(transcribe_router)
-app.include_router(profile_router)
-app.include_router(download_router)
+for _router in _discover_tool_routers():
+    app.include_router(_router)

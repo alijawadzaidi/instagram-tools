@@ -5,8 +5,9 @@ Use this engine when we want subtitles/diarization. Needs ASSEMBLYAI_API_KEY.
 
 from __future__ import annotations
 
-from ....config import settings
-from ....shared.errors import EngineError
+from app.core.config import settings
+from app.core.errors import EngineError
+
 from .base import Engine, Segment, Transcript
 
 

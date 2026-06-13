@@ -3,8 +3,8 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
-from app.config import settings
-from app.db.base import Base
+from app.core.config import settings
+from app.core.db import Base
 import app.models.job  # noqa: F401 - registers Job table with Base
 
 config = context.config

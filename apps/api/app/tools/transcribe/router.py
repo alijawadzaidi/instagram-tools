@@ -9,9 +9,10 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ...db.session import get_db
-from ...shared.auth import require_internal_key
-from ...shared.jobs import create_job, get_job, run_job
+from app.core.auth import require_internal_key
+from app.core.db import get_db
+from app.jobs.runner import create_job, get_job, run_job
+
 from .schemas import JobResponse, TranscribeRequest
 from .service import transcribe_reel
 

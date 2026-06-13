@@ -24,47 +24,6 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 export const defaultHealth = <ThrowOnError extends boolean = true>(options?: Options<DefaultHealthData, ThrowOnError>): RequestResult<DefaultHealthResponses, unknown, ThrowOnError> => (options?.client ?? client).get<DefaultHealthResponses, unknown, ThrowOnError>({ url: '/health', ...options });
 
 /**
- * Start
- */
-export const transcribeStart = <ThrowOnError extends boolean = true>(options: Options<TranscribeStartData, ThrowOnError>): RequestResult<TranscribeStartResponses, TranscribeStartErrors, ThrowOnError> => (options.client ?? client).post<TranscribeStartResponses, TranscribeStartErrors, ThrowOnError>({
-    url: '/tools/transcribe',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Status
- */
-export const transcribeStatus = <ThrowOnError extends boolean = true>(options: Options<TranscribeStatusData, ThrowOnError>): RequestResult<TranscribeStatusResponses, TranscribeStatusErrors, ThrowOnError> => (options.client ?? client).get<TranscribeStatusResponses, TranscribeStatusErrors, ThrowOnError>({ url: '/tools/transcribe/{job_id}', ...options });
-
-/**
- * List Reels
- */
-export const profileListReels = <ThrowOnError extends boolean = true>(options: Options<ProfileListReelsData, ThrowOnError>): RequestResult<ProfileListReelsResponses, ProfileListReelsErrors, ThrowOnError> => (options.client ?? client).post<ProfileListReelsResponses, ProfileListReelsErrors, ThrowOnError>({
-    url: '/tools/profile/reels',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Info
- */
-export const profileInfo = <ThrowOnError extends boolean = true>(options: Options<ProfileInfoData, ThrowOnError>): RequestResult<ProfileInfoResponses, ProfileInfoErrors, ThrowOnError> => (options.client ?? client).post<ProfileInfoResponses, ProfileInfoErrors, ThrowOnError>({
-    url: '/tools/profile/info',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
  * Formats
  */
 export const downloadFormats = <ThrowOnError extends boolean = true>(options: Options<DownloadFormatsData, ThrowOnError>): RequestResult<DownloadFormatsResponses, DownloadFormatsErrors, ThrowOnError> => (options.client ?? client).post<DownloadFormatsResponses, DownloadFormatsErrors, ThrowOnError>({
@@ -111,3 +70,44 @@ export const downloadZipReels = <ThrowOnError extends boolean = true>(options: O
         ...options.headers
     }
 });
+
+/**
+ * List Reels
+ */
+export const profileListReels = <ThrowOnError extends boolean = true>(options: Options<ProfileListReelsData, ThrowOnError>): RequestResult<ProfileListReelsResponses, ProfileListReelsErrors, ThrowOnError> => (options.client ?? client).post<ProfileListReelsResponses, ProfileListReelsErrors, ThrowOnError>({
+    url: '/tools/profile/reels',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Info
+ */
+export const profileInfo = <ThrowOnError extends boolean = true>(options: Options<ProfileInfoData, ThrowOnError>): RequestResult<ProfileInfoResponses, ProfileInfoErrors, ThrowOnError> => (options.client ?? client).post<ProfileInfoResponses, ProfileInfoErrors, ThrowOnError>({
+    url: '/tools/profile/info',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Start
+ */
+export const transcribeStart = <ThrowOnError extends boolean = true>(options: Options<TranscribeStartData, ThrowOnError>): RequestResult<TranscribeStartResponses, TranscribeStartErrors, ThrowOnError> => (options.client ?? client).post<TranscribeStartResponses, TranscribeStartErrors, ThrowOnError>({
+    url: '/tools/transcribe',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Status
+ */
+export const transcribeStatus = <ThrowOnError extends boolean = true>(options: Options<TranscribeStatusData, ThrowOnError>): RequestResult<TranscribeStatusResponses, TranscribeStatusErrors, ThrowOnError> => (options.client ?? client).get<TranscribeStatusResponses, TranscribeStatusErrors, ThrowOnError>({ url: '/tools/transcribe/{job_id}', ...options });

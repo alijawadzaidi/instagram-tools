@@ -27,11 +27,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, Response
 from starlette.background import BackgroundTask
 
-from ...shared import ig_http
-from ...shared.auth import require_internal_key
-from ...shared.errors import DownloadError, NotFoundError, ToolError
-from ...shared.ig_download import download_one, list_qualities
-from ...shared.ig_extractor import extract_shortcode, get_cover
+from app.core.auth import require_internal_key
+from app.core.errors import DownloadError, NotFoundError, ToolError
+from app.integrations.instagram import http
+
+from . import service
 from .schemas import (
     CoverRequest,
     CoverResponse,
@@ -39,6 +39,7 @@ from .schemas import (
     FormatsResponse,
     ZipRequest,
 )
+from .service import download_one, extract_shortcode
 
 # Only proxy images from Instagram's own CDNs (prevents this from being an open proxy).
 _ALLOWED_IMAGE_HOSTS = ("cdninstagram.com", "fbcdn.net")
@@ -52,7 +53,7 @@ router = APIRouter(
 
 @router.post("/formats", response_model=FormatsResponse)
 def formats(req: FormatsRequest) -> FormatsResponse:
-    return FormatsResponse(**list_qualities(req.url))
+    return FormatsResponse(**service.list_formats(req.url))
 
 
 @router.get("/file")
@@ -78,10 +79,10 @@ def file(
 
 @router.post("/cover", response_model=CoverResponse)
 def cover(req: CoverRequest) -> CoverResponse:
-    cover_url = get_cover(req.url)
-    if not cover_url:
+    found = service.cover_url(req.url)
+    if not found:
         raise NotFoundError("Couldn't find a cover for this reel.")
-    return CoverResponse(shortcode=extract_shortcode(req.url) or "", cover_url=cover_url)
+    return CoverResponse(shortcode=extract_shortcode(req.url) or "", cover_url=found)
 
 
 @router.get("/image")
@@ -94,7 +95,7 @@ def image(
     if not any(host == h or host.endswith("." + h) for h in _ALLOWED_IMAGE_HOSTS):
         raise HTTPException(status_code=400, detail="Only Instagram CDN images are allowed.")
     safe_name = re.sub(r"[^A-Za-z0-9._-]", "_", filename) or "image.jpg"
-    req = urllib.request.Request(url, headers={"User-Agent": ig_http.BASE_HEADERS["User-Agent"]})
+    req = urllib.request.Request(url, headers={"User-Agent": http.BASE_HEADERS["User-Agent"]})
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = resp.read()

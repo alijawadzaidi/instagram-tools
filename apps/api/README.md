@@ -4,22 +4,37 @@ FastAPI service that does the real work (downloading + transcribing). The Next.j
 frontend (`apps/web`) calls it. See `../../Architecture/02-transcriber-design.md`.
 
 ## Layout
+Layered: infrastructure in `core/`, external systems in `integrations/`, and
+swappable implementations in `providers/`. Product logic lives only in
+`tools/<slug>/`. Routers are auto-discovered by `main.py`.
 ```
 app/
-├── main.py            # FastAPI app; mounts every tool's router
-├── config.py          # settings from env / .env
-├── shared/            # reused by ALL tools
-│   ├── downloader.py  # yt-dlp + cookies + typed-error classification
-│   ├── audio.py       # ffmpeg -> 16kHz mono wav
-│   ├── jobs.py        # background-job store (poll-based)
-│   └── errors.py      # typed, user-facing errors
-└── tools/
-    └── transcribe/    # tool #1
-        ├── router.py  # POST /tools/transcribe, GET .../{job_id}
-        ├── service.py # the 3-stage pipeline
-        ├── schemas.py
-        └── engines/   # local_whisper | openai | assemblyai (swappable)
+├── main.py                  # FastAPI app; auto-discovers tools/*/router.py
+├── core/                    # infrastructure
+│   ├── config.py            # settings from env / .env
+│   ├── db.py                # Base + lazily-created engine/session
+│   ├── errors.py            # typed, user-facing ToolErrors
+│   ├── auth.py              # internal-key dependency (BFF)
+│   └── logging.py           # structured logging
+├── integrations/
+│   └── instagram/           # the no-login IG client
+│       ├── http.py          # request primitives + headers
+│       ├── session.py       # cookie warmup (cached)
+│       ├── extractor.py     # single-reel media/caption
+│       ├── profile.py       # profile info + cursor-paginated reels
+│       ├── download.py      # yt-dlp quality ladder
+│       └── hashtags.py      # caption -> #tags
+├── media/                   # audio.py (ffmpeg), downloader.py (CDN/yt-dlp)
+├── providers/
+│   └── transcription/       # local_whisper | openai | assemblyai (swappable)
+├── jobs/                    # runner.py (background-job store, poll-based)
+├── models/                  # SQLAlchemy ORM (Job)
+└── tools/                   # vertical slices — the ONLY place product logic lives
+    └── <slug>/              # router.py (transport) + schemas.py + service.py
 ```
+
+The OpenAPI contract (`openapi.json`) and the generated TS client are produced
+by `pnpm gen` at the repo root — see `../../Architecture/04-scalable-structure-plan.md`.
 
 ## Setup & run
 ```bash
@@ -43,9 +58,19 @@ GET  /tools/transcribe/{job_id}
 ```
 
 ## Adding a new tool
-1. Create `app/tools/<tool>/router.py` exporting an `APIRouter` named `router`.
-2. Reuse anything in `app/shared/`.
-3. Include it in `app/main.py`. Done.
+1. Create `app/tools/<slug>/` with `schemas.py` (the type source of truth),
+   `service.py` (the product logic), and `router.py` exporting an `APIRouter`
+   named `router`. Compose `integrations/`, `providers/`, `media/`, `jobs/`.
+2. Raise `ToolError` subclasses for failures — no try/except in the router.
+3. Run `pnpm gen` (repo root) to regenerate the typed client. Done — `main.py`
+   auto-discovers the router; no shared file is edited.
+
+## Tests
+```bash
+pip install -r requirements-dev.txt
+pytest          # deterministic parsing + app-wiring tests (no live Instagram)
+ruff check app/ tests/
+```
 
 ## Hosting notes
 - Set `IG_COOKIES_FILE` — Instagram blocks data-center IPs, so a logged-in

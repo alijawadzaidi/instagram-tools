@@ -6,8 +6,9 @@ a cloud engine instead (see config.transcribe_engine).
 
 from __future__ import annotations
 
-from ....config import settings
-from ....shared.errors import EngineError
+from app.core.config import settings
+from app.core.errors import EngineError
+
 from .base import Engine, Segment, Transcript
 
 

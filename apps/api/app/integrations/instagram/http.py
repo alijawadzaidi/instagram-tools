@@ -1,19 +1,17 @@
-"""Shared low-level HTTP primitives for talking to Instagram's web endpoints.
+"""Low-level HTTP primitives for Instagram's web endpoints.
 
 The no-login technique (verified May 2026, see Research/05) relies on:
   - the public web-client app id header (`X-IG-App-ID`),
-  - a cookie warmup (visit a page to collect csrftoken/mid),
+  - a cookie warmup (visit a page to collect csrftoken/mid — see session.py),
   - NOT following redirects (a 302 to /login means "blocked", and following it
     strips our custom headers).
 
-Both `ig_extractor` (single reel) and `ig_profile` (a user's reels) build on this.
+`extractor` (single reel) and `profile` (a user's reels) build on this.
 """
 
 from __future__ import annotations
 
 import gzip
-import urllib.error
-import urllib.parse
 import urllib.request
 
 IG_APP_ID = "936619743392459"  # Instagram's public web-client app id
@@ -45,21 +43,6 @@ def request(url: str, headers: dict, data: bytes | None = None) -> str:
     if resp.headers.get("Content-Encoding") == "gzip":
         raw = gzip.decompress(raw)
     return raw.decode("utf-8", errors="replace")
-
-
-def session_cookies(page_url: str) -> dict:
-    """Warm up: hit a public page to collect csrftoken/mid cookies."""
-    cookies: dict[str, str] = {}
-    req = urllib.request.Request(page_url, headers=BASE_HEADERS)
-    try:
-        resp = opener.open(req, timeout=30)
-        raw = resp.headers.get_all("Set-Cookie", []) or []
-    except urllib.error.HTTPError as e:
-        raw = e.headers.get_all("Set-Cookie", []) or []
-    for c in raw:
-        k, _, v = c.split(";")[0].partition("=")
-        cookies[k] = v
-    return cookies
 
 
 def auth_headers(cookies: dict, extra: dict | None = None) -> dict:

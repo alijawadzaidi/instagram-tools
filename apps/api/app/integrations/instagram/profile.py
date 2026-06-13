@@ -18,8 +18,9 @@ import urllib.error
 import urllib.parse
 from dataclasses import dataclass
 
-from . import ig_http
-from .errors import NotFoundError, PrivateContentError, RateLimitedError
+from app.core.errors import NotFoundError, PrivateContentError, RateLimitedError
+
+from . import http, session
 from .hashtags import extract_hashtags
 
 _CLIPS_URL = "https://www.instagram.com/api/v1/clips/user/"
@@ -73,7 +74,7 @@ def _fetch_web_profile(username: str, cookies: dict) -> dict:
         + urllib.parse.quote(username)
     )
     try:
-        data = json.loads(ig_http.request(url, ig_http.auth_headers(cookies)))
+        data = json.loads(http.request(url, http.auth_headers(cookies)))
     except urllib.error.HTTPError as e:
         if e.code == 404:
             raise NotFoundError(f"No Instagram user named @{username}.") from e
@@ -117,7 +118,7 @@ class ProfileInfo:
 def get_profile(username: str) -> ProfileInfo:
     """Public profile overview for @username (works even for private accounts)."""
     username = username.lstrip("@").strip()
-    cookies = ig_http.session_cookies(f"https://www.instagram.com/{username}/")
+    cookies = session.session_cookies(f"https://www.instagram.com/{username}/")
     u = _fetch_web_profile(username, cookies)
     return ProfileInfo(
         username=u.get("username") or username,
@@ -153,7 +154,7 @@ def get_reels_page(
     the following page. `next_cursor` is None when there are no more reels.
     """
     username = username.lstrip("@").strip()
-    cookies = ig_http.session_cookies(f"https://www.instagram.com/{username}/")
+    cookies = session.session_cookies(f"https://www.instagram.com/{username}/")
 
     if cursor:
         user_id, max_id = _decode_cursor(cursor)
@@ -163,12 +164,12 @@ def get_reels_page(
     form = {"target_user_id": user_id, "page_size": str(page_size)}
     if max_id:
         form["max_id"] = max_id
-    headers = ig_http.auth_headers(
+    headers = http.auth_headers(
         cookies, {"Content-Type": "application/x-www-form-urlencoded"}
     )
     try:
         data = json.loads(
-            ig_http.request(_CLIPS_URL, headers, data=urllib.parse.urlencode(form).encode())
+            http.request(_CLIPS_URL, headers, data=urllib.parse.urlencode(form).encode())
         )
     except urllib.error.HTTPError as e:
         if e.code == 429:

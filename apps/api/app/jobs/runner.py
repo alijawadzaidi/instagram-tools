@@ -13,10 +13,9 @@ from typing import Any, Callable
 
 from sqlalchemy.orm import Session
 
-from app.db.session import SessionLocal
+from app.core.db import SessionLocal
+from app.core.errors import ToolError
 from app.models.job import Job
-
-from .errors import ToolError
 
 log = logging.getLogger("app.jobs")
 

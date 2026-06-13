@@ -3,7 +3,7 @@
 Replicates the technique the public downloader sites use (studied from `parth-dl`):
 resolve the reel's CDN MP4 URL straight from Instagram's GraphQL/embed endpoints.
 Verified live May 2026 — see Research/05-download-technique.md. Shared HTTP bits
-live in `ig_http`.
+live in `http`.
 """
 
 from __future__ import annotations
@@ -13,8 +13,9 @@ import re
 import urllib.error
 import urllib.parse
 
-from . import ig_http
-from .errors import NotFoundError, PrivateContentError, RateLimitedError
+from app.core.errors import NotFoundError, PrivateContentError, RateLimitedError
+
+from . import http, session
 
 _GRAPHQL_DOC_ID = "8845758582119845"
 
@@ -39,7 +40,7 @@ def _graphql_media(shortcode: str, cookies: dict) -> dict:
         + "&variables="
         + urllib.parse.quote(json.dumps(variables))
     )
-    data = json.loads(ig_http.request(url, ig_http.auth_headers(cookies)))
+    data = json.loads(http.request(url, http.auth_headers(cookies)))
     return (data.get("data") or {}).get("xdt_shortcode_media") or {}
 
 
@@ -53,7 +54,7 @@ def get_cover(url: str) -> str:
     if not shortcode:
         return ""
     try:
-        cookies = ig_http.session_cookies(f"https://www.instagram.com/p/{shortcode}/")
+        cookies = session.session_cookies(f"https://www.instagram.com/p/{shortcode}/")
         media = _graphql_media(shortcode, cookies)
     except Exception:
         return ""
@@ -66,7 +67,7 @@ def get_caption(url: str) -> str:
     if not shortcode:
         return ""
     try:
-        cookies = ig_http.session_cookies(f"https://www.instagram.com/p/{shortcode}/")
+        cookies = session.session_cookies(f"https://www.instagram.com/p/{shortcode}/")
         media = _graphql_media(shortcode, cookies)
     except Exception:
         return ""
@@ -75,8 +76,8 @@ def get_caption(url: str) -> str:
 
 
 def _via_embed(shortcode: str) -> str | None:
-    webpage = ig_http.request(
-        f"https://www.instagram.com/p/{shortcode}/embed/", ig_http.BASE_HEADERS
+    webpage = http.request(
+        f"https://www.instagram.com/p/{shortcode}/embed/", http.BASE_HEADERS
     )
     m = re.search(r'"video_url":"([^"]+)"', webpage)
     if m:
@@ -90,7 +91,7 @@ def get_video_url(url: str) -> str:
     if not shortcode:
         raise NotFoundError("That doesn't look like a valid Instagram reel/post URL.")
 
-    cookies = ig_http.session_cookies(f"https://www.instagram.com/p/{shortcode}/")
+    cookies = session.session_cookies(f"https://www.instagram.com/p/{shortcode}/")
 
     last_http_error: urllib.error.HTTPError | None = None
     for fn in (lambda: _via_graphql(shortcode, cookies), lambda: _via_embed(shortcode)):

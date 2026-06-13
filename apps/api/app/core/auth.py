@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from fastapi import Header, HTTPException
 
-from ..config import settings
+from app.core.config import settings
 
 
 # include_in_schema=False: the BFF proxy injects this header, so it must not

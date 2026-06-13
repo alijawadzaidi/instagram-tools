@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import tempfile
 
-from ...config import settings
-from ...shared import ig_extractor
-from ...shared.audio import extract_audio
-from ...shared.downloader import download_video
-from ...shared.hashtags import extract_hashtags
-from .engines import get_engine
+from app.core.config import settings
+from app.integrations.instagram import extractor
+from app.integrations.instagram.hashtags import extract_hashtags
+from app.media.audio import extract_audio
+from app.media.downloader import download_video
+from app.providers.transcription import get_engine
 
 
 def transcribe_reel(url: str, engine_name: str | None = None) -> dict:
@@ -27,7 +27,7 @@ def transcribe_reel(url: str, engine_name: str | None = None) -> dict:
 
     result = transcript.to_dict()
     # Caption + hashtags come free from the reel's metadata (no audio needed).
-    caption = ig_extractor.get_caption(url)
+    caption = extractor.get_caption(url)
     result["caption"] = caption
     result["hashtags"] = extract_hashtags(caption)
     return result

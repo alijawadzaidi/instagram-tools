@@ -6,7 +6,7 @@ import os
 import shutil
 import subprocess
 
-from .errors import EngineError
+from app.core.errors import EngineError
 
 
 def extract_audio(video_path: str, out_dir: str) -> str:
