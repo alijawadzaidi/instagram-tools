@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Secret scan on staged changes. Active once gitleaks is installed
+# (brew install gitleaks). No-op + hint if it isn't, so it never blocks a commit
+# for someone who hasn't set it up. Enabled via core.hooksPath (see package.json
+# "prepare"). Config: .gitleaks.toml.
+set -euo pipefail
+
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --redact --config .gitleaks.toml
+else
+  echo "[pre-commit] gitleaks not installed — skipping secret scan (brew install gitleaks)"
+fi

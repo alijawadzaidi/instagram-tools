@@ -1,0 +1,11 @@
+# gitleaks config for the pre-commit secret scan (.githooks/pre-commit).
+# Extends the built-in ruleset; add allowlist entries for known-safe matches.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Files that legitimately contain placeholder/example secrets."
+paths = [
+  '''\.env\.example$''',
+  '''apps/api/scripts/export_openapi\.py''', # sets a placeholder DATABASE_URL
+]

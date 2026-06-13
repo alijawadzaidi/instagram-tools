@@ -13,8 +13,8 @@ Architecture/     # stack + system design decisions
 Implementation/   # Phase 0 throwaway spike (proves the pipeline)
 ```
 The app lives in `apps/`. The other folders are planning + reference (see each
-folder's docs). Adding a tool = one backend folder + one frontend page + one
-registry entry — see `Architecture/03-monorepo-layout.md`.
+folder's docs). Adding a tool is one command — `pnpm new-tool <slug>` then
+`pnpm gen`. See `CLAUDE.md` for the architecture, rules, and recipe.
 
 ## How it works (no magic)
 Every reel transcription is the same 3 stages: **download (yt-dlp) → extract audio
@@ -47,8 +47,11 @@ link, and hit Transcribe. (First run downloads the Whisper model once.)
 ## Status
 - ✅ Phase 0 spike — pipeline proven end to end (`Implementation/phase0-spike/`)
 - ✅ Monorepo scaffolded — Next.js dashboard + FastAPI backend
-- ✅ Tool #1 (Reel Transcriber) — working end to end, swappable engines
-- ⏭️ Next: hosting (cookies + container deploy), then tool #2
+- ✅ 8 tools shipped (see `ROADMAP.md`)
+- ✅ Scalable restructure complete — feature modules, TanStack Query, generated
+  typed client, layered backend, durable jobs + LLM layer, `pnpm new-tool`
+  scaffold (`Architecture/04-scalable-structure-plan.md`)
+- ⏭️ Next: hosting (cookies + container deploy); then ROADMAP N1 + AI tools
 
 ## Key decisions (the short version)
 - **Stack:** monorepo, Next.js frontend + Python/FastAPI backend, pnpm + Turborepo.

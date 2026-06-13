@@ -6,14 +6,19 @@
   "scripts": {
     "dev": "concurrently -k -n web,api -c cyan,magenta \"pnpm dev:web\" \"pnpm dev:api\"",
     "dev:web": "pnpm --filter web dev",
-    "dev:api": "cd apps/api && .venv\\Scripts\\uvicorn app.main:app --reload --port 8000",
+    "dev:api": "cd apps/api && .venv/bin/uvicorn app.main:app --reload --port 8000",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "web": "pnpm --filter web",
+    "prepare": "git config core.hooksPath .githooks || true",
+    "new-tool": "node scripts/new-tool.mjs",
     "gen:openapi": "cd apps/api && .venv/bin/python -m scripts.export_openapi",
     "gen:client": "pnpm --filter @repo/api-client run generate",
     "gen": "pnpm run gen:openapi && pnpm run gen:client",
-    "gen:check": "pnpm run gen && git diff --exit-code -- apps/api/openapi.json packages/api-client/src/generated"
+    "gen:check": "pnpm run gen && git diff --exit-code -- apps/api/openapi.json packages/api-client/src/generated",
+    "check:web": "pnpm --filter web exec tsc --noEmit && pnpm --filter web run lint",
+    "check:api": "cd apps/api && .venv/bin/ruff check app/ tests/ && .venv/bin/python -m pytest -q",
+    "quick-check": "pnpm run check:web && pnpm run check:api"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

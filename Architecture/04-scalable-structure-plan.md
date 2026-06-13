@@ -138,7 +138,16 @@ Full annotated trees: `Research/06-restructure/06-proposed-structure.md` §1–2
    worker-topology decision (open question #1); the code is ready behind
    `claim_one`/`worker.py`. *SSE streaming plumbing* — build with the first AI
    tool that needs it (convention documented in apps/api/README).
-6. **Scaffolding** — `pnpm new-tool`, root scripts, CLAUDE.md recipe.
+6. ✅ **Scaffolding + ergonomics** (done 2026-06-13) — `pnpm new-tool <slug>`
+   generator (`scripts/new-tool.mjs`) scaffolds the full backend module +
+   frontend feature + page and registers it (verified: a scaffolded tool
+   compiles across the stack after `pnpm gen`). Root scripts: `new-tool`,
+   `quick-check` (web tsc+lint / api ruff+pytest), fixed `dev:api` for macOS.
+   Secret-scan pre-commit via `.githooks/pre-commit` + `.gitleaks.toml` (wired
+   through `prepare`; non-blocking if gitleaks absent). Root `CLAUDE.md` encodes
+   the tool pattern, the add-a-tool recipe, the rules (no raw fetch, no
+   hand-written types, no cross-feature imports, ToolError not try/except), a
+   reusable-components table, and the glossary.
 
 ## Acceptance test
 
