@@ -68,9 +68,9 @@ export function ReelCard({
         <p className="text-muted-foreground line-clamp-2 text-xs">
           {reel.caption || "(no caption)"}
         </p>
-        {reel.hashtags.length > 0 && (
+        {(reel.hashtags?.length ?? 0) > 0 && (
           <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-            <HashtagChips hashtags={reel.hashtags} size="sm" />
+            <HashtagChips hashtags={reel.hashtags ?? []} size="sm" />
           </div>
         )}
         {state?.status === "done" && (

@@ -1,231 +1,143 @@
 /**
- * Typed client for the Python backend (apps/api).
- *
- * The backend runs transcription as a background job to avoid request timeouts
- * (a long reel can take a while). So the flow is: POST to start a job, then poll
- * the job until it's done. See Architecture/02-transcriber-design.md.
+ * App-facing wrapper over the generated @repo/api-client. Types come from the
+ * FastAPI OpenAPI schema (Pydantic is the single source of truth — Architecture
+ * /04 Phase 3); this module only adds ergonomic names + a few browser helpers
+ * (URL builders, blob download, start-and-poll). All requests go through the BFF
+ * proxy and throw `ApiError` on failure.
  */
 
-// All requests go through the Next.js BFF proxy at /api/proxy which validates
-// the auth session before forwarding to FastAPI with the internal service key.
-const API_URL = "/api/proxy";
+import {
+  ApiError,
+  API_BASE_URL,
+  transcribeStart,
+  transcribeStatus,
+  profileListReels,
+  profileInfo,
+  downloadFormats,
+  downloadCover,
+  type TranscribeRequest,
+  type TranscriptResult,
+  type Segment,
+  type JobResponse,
+  type ReelSummaryModel,
+  type ProfileReelsResponse,
+  type ProfileInfoResponse,
+  type CoverResponse,
+  type QualityOption,
+  type FormatsResponse,
+} from "@repo/api-client";
 
-export type TranscribeEngine = "local_whisper" | "openai" | "assemblyai";
+import { downloadBlob } from "@/lib/download";
 
-export interface TranscriptSegment {
-  start: number;
-  end: number;
-  text: string;
+export { ApiError };
+
+// Re-export the generated types under the names the app already uses.
+export type TranscribeEngine = NonNullable<TranscribeRequest["engine"]>;
+export type TranscriptSegment = Segment;
+export type JobStatus = JobResponse["status"];
+export type Job = JobResponse;
+export type ReelSummary = ReelSummaryModel;
+export type ProfileInfo = ProfileInfoResponse;
+export type {
+  TranscriptResult,
+  ProfileReelsResponse,
+  CoverResponse,
+  QualityOption,
+  FormatsResponse,
+};
+
+// --- transcription jobs ---
+
+/** Start a transcription job. Returns immediately with a job id. */
+export async function startTranscription(
+  url: string,
+  engine?: TranscribeEngine,
+): Promise<Job> {
+  const { data } = await transcribeStart({ body: { url, engine } });
+  return data;
 }
 
-export interface TranscriptResult {
-  text: string;
-  segments: TranscriptSegment[];
-  language?: string;
-  caption?: string;
-  hashtags?: string[];
+export async function getJob(jobId: string): Promise<Job> {
+  const { data } = await transcribeStatus({ path: { job_id: jobId } });
+  return data;
 }
 
-export type JobStatus = "pending" | "running" | "done" | "error";
-
-export interface Job {
-  job_id: string;
-  status: JobStatus;
-  result?: TranscriptResult;
-  /** Machine-readable error code, e.g. "private", "rate_limited", "no_audio". */
-  error_code?: string;
-  /** Human-readable error message. */
-  error?: string;
-}
+// --- profile reels ---
 
 /**
- * A failed backend call. Carries the backend's machine-readable `code` (from the
- * global error handler — see Architecture/04) so callers and the QueryClient can
- * branch on it (e.g. retry only `rate_limited`) instead of string-matching.
+ * Fetch one page of a user's reels. Omit `cursor` for the first page; pass the
+ * `next_cursor` from the previous response to load the next page.
  */
-export class ApiError extends Error {
-  constructor(
-    readonly status: number,
-    readonly code: string,
-    message: string,
-  ) {
-    super(message);
-    this.name = "ApiError";
-  }
-
-  /** Transient failures worth a retry; client (4xx) errors are not. */
-  get retryable(): boolean {
-    return this.code === "rate_limited" || this.status >= 500;
-  }
+export async function fetchProfileReels(
+  username: string,
+  cursor?: string | null,
+  pageSize = 12,
+): Promise<ProfileReelsResponse> {
+  const { data } = await profileListReels({
+    body: { username, cursor: cursor ?? null, page_size: pageSize },
+  });
+  return data;
 }
 
-async function http<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+// --- profile info (overview) ---
+
+export async function fetchProfileInfo(username: string): Promise<ProfileInfo> {
+  const { data } = await profileInfo({ body: { username } });
+  return data;
+}
+
+// --- covers + images ---
+
+export async function fetchCover(url: string): Promise<CoverResponse> {
+  const { data } = await downloadCover({ body: { url } });
+  return data;
+}
+
+/** GET url that streams an Instagram CDN image back as a download. */
+export function imageDownloadUrl(url: string, filename: string): string {
+  const q = new URLSearchParams({ url, filename });
+  return `${API_BASE_URL}/tools/download/image?${q.toString()}`;
+}
+
+// --- downloads ---
+
+export async function fetchFormats(url: string): Promise<FormatsResponse> {
+  const { data } = await downloadFormats({ body: { url } });
+  return data;
+}
+
+/** Direct GET url for a single-reel download (browser saves via Content-Disposition). */
+export function downloadFileUrl(url: string, quality: string): string {
+  const q = new URLSearchParams({ url, quality });
+  return `${API_BASE_URL}/tools/download/file?${q.toString()}`;
+}
+
+/** Bulk download: POST urls, get a zip blob back, and save it. */
+export async function downloadZip(urls: string[], quality: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/tools/download/zip`, {
+    method: "POST",
     headers: { "Content-Type": "application/json" },
-    ...init,
+    body: JSON.stringify({ urls, quality }),
   });
   if (!res.ok) {
     let code = "error";
     let message = res.statusText;
     try {
       const body = await res.json();
-      message = body.message ?? body.detail ?? body.error ?? message;
+      message = body.message ?? body.detail ?? message;
       if (typeof body.code === "string") code = body.code;
     } catch {
       // non-JSON error body; keep statusText
     }
     throw new ApiError(res.status, code, message);
   }
-  return res.json() as Promise<T>;
-}
-
-/** Start a transcription job. Returns immediately with a job id. */
-export function startTranscription(
-  url: string,
-  engine?: TranscribeEngine,
-): Promise<Job> {
-  return http<Job>("/tools/transcribe", {
-    method: "POST",
-    body: JSON.stringify({ url, engine }),
-  });
-}
-
-export function getJob(jobId: string): Promise<Job> {
-  return http<Job>(`/tools/transcribe/${jobId}`);
-}
-
-// --- profile reels ---
-
-export interface ReelSummary {
-  shortcode: string;
-  url: string;
-  thumbnail_url: string | null;
-  caption: string;
-  hashtags: string[];
-  view_count: number | null;
-  taken_at: number | null; // unix timestamp posted
-}
-
-export interface ProfileReelsResponse {
-  username: string;
-  reels: ReelSummary[];
-  next_cursor: string | null; // null when there are no more reels
+  downloadBlob("reels.zip", await res.blob(), "application/zip");
 }
 
 /**
- * Fetch one page of a user's reels. Omit `cursor` for the first page; pass the
- * `next_cursor` from the previous response to load the next page.
- */
-export function fetchProfileReels(
-  username: string,
-  cursor?: string | null,
-  pageSize = 12,
-): Promise<ProfileReelsResponse> {
-  return http<ProfileReelsResponse>("/tools/profile/reels", {
-    method: "POST",
-    body: JSON.stringify({ username, cursor: cursor ?? null, page_size: pageSize }),
-  });
-}
-
-// --- profile info (overview) ---
-
-export interface ProfileInfo {
-  username: string;
-  full_name: string;
-  biography: string;
-  follower_count: number | null;
-  following_count: number | null;
-  post_count: number | null;
-  is_verified: boolean;
-  is_private: boolean;
-  profile_pic_url: string | null;
-  external_url: string | null;
-  category: string | null;
-}
-
-export function fetchProfileInfo(username: string): Promise<ProfileInfo> {
-  return http<ProfileInfo>("/tools/profile/info", {
-    method: "POST",
-    body: JSON.stringify({ username }),
-  });
-}
-
-/** GET url that streams an Instagram CDN image back as a download. */
-export function imageDownloadUrl(url: string, filename: string): string {
-  const q = new URLSearchParams({ url, filename });
-  return `${API_URL}/tools/download/image?${q.toString()}`;
-}
-
-export interface CoverResponse {
-  shortcode: string;
-  cover_url: string | null;
-}
-
-export function fetchCover(url: string): Promise<CoverResponse> {
-  return http<CoverResponse>("/tools/download/cover", {
-    method: "POST",
-    body: JSON.stringify({ url }),
-  });
-}
-
-// --- downloads ---
-
-export interface QualityOption {
-  id: string; // "best" | a width like "720" | "audio"
-  label: string;
-  width: number | null;
-  height: number | null;
-  filesize: number | null;
-}
-
-export interface FormatsResponse {
-  shortcode: string;
-  qualities: QualityOption[];
-  audio_available: boolean;
-}
-
-export function fetchFormats(url: string): Promise<FormatsResponse> {
-  return http<FormatsResponse>("/tools/download/formats", {
-    method: "POST",
-    body: JSON.stringify({ url }),
-  });
-}
-
-/** Direct GET url for a single-reel download (browser saves via Content-Disposition). */
-export function downloadFileUrl(url: string, quality: string): string {
-  const q = new URLSearchParams({ url, quality });
-  return `${API_URL}/tools/download/file?${q.toString()}`;
-}
-
-/** Bulk download: POST urls, get a zip blob back, and save it. */
-export async function downloadZip(urls: string[], quality: string): Promise<void> {
-  const res = await fetch(`${API_URL}/tools/download/zip`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ urls, quality }),
-  });
-  if (!res.ok) {
-    let detail = res.statusText;
-    try {
-      const body = await res.json();
-      detail = body.message ?? body.detail ?? detail;
-    } catch {}
-    throw new Error(detail);
-  }
-  const blob = await res.blob();
-  const objUrl = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = objUrl;
-  a.download = "reels.zip";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(objUrl);
-}
-
-/**
- * Convenience: start a job and poll until it finishes (or errors).
- * Calls `onStatus` whenever the status changes so the UI can show progress.
+ * Convenience: start a job and poll until it finishes (or errors). Calls
+ * `onStatus` whenever the status changes so the UI can show progress. Used by
+ * the profile batch-transcribe pool; single-reel flows use the jobQuery layer.
  */
 export async function transcribeReel(
   url: string,
@@ -238,8 +150,7 @@ export async function transcribeReel(
 ): Promise<TranscriptResult> {
   const { engine, onStatus, signal, intervalMs = 2000 } = opts;
 
-  const started = await startTranscription(url, engine);
-  let job = started;
+  let job = await startTranscription(url, engine);
   onStatus?.(job.status);
 
   while (job.status === "pending" || job.status === "running") {
@@ -251,7 +162,7 @@ export async function transcribeReel(
   }
 
   if (job.status === "error" || !job.result) {
-    throw new Error(job.error ?? "Transcription failed.");
+    throw new ApiError(0, job.error_code ?? "engine_error", job.error ?? "Transcription failed.");
   }
   return job.result;
 }

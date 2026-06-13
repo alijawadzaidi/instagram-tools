@@ -82,8 +82,16 @@ Full annotated trees: `Research/06-restructure/06-proposed-structure.md` §1–2
    Registry derived from per-feature `meta.ts` (lib/tools.ts deleted). ESLint
    `import/no-restricted-paths` zones enforce shared→features→app and no
    cross-feature imports (verified: both fire). tsc + next build green.
-3. **Generated client** — `packages/api-client`, delete `lib/api.ts`,
-   `pnpm gen` + CI drift check.
+3. ✅ **Generated client** (done 2026-06-13) — `packages/api-client` generated
+   by `@hey-api/openapi-ts` (types + SDK + bundled fetch client) from
+   `apps/api/openapi.json`; Pydantic schemas are now the single source of truth
+   for types. Backend got clean operationIds (`generate_unique_id_function`),
+   an `export_openapi.py` script, and `include_in_schema=False` on the internal
+   auth header. `lib/api.ts` is now a thin adapter over the generated SDK
+   (hand-written interfaces deleted; `ApiError` lives in the package and is what
+   the error interceptor throws). Root `pnpm gen` (export → regenerate) +
+   `pnpm gen:check` drift guard. Generated code committed. Dropped the TanStack
+   plugin — `src/queries/*` wrap the SDK so generated options would be unused.
 4. **Backend restructure** — split `shared/`, promote providers, httpx-async,
    fixture tests.
 5. **Jobs platform + AI readiness** — durable queue, reaper, per-user cost

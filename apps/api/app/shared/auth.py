@@ -12,6 +12,11 @@ from fastapi import Header, HTTPException
 from ..config import settings
 
 
-async def require_internal_key(x_internal_key: str = Header(...)) -> None:
+# include_in_schema=False: the BFF proxy injects this header, so it must not
+# appear in the OpenAPI contract (otherwise the generated client would require
+# every caller to pass it).
+async def require_internal_key(
+    x_internal_key: str = Header(..., include_in_schema=False),
+) -> None:
     if not settings.internal_api_key or x_internal_key != settings.internal_api_key:
         raise HTTPException(status_code=401, detail="Unauthorized")

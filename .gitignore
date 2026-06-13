@@ -20,3 +20,6 @@ transcripts/
 *.mp4
 *.wav
 *.mp3
+
+# hey-api codegen error logs
+openapi-ts-error-*.log

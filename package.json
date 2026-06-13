@@ -9,7 +9,11 @@
     "dev:api": "cd apps/api && .venv\\Scripts\\uvicorn app.main:app --reload --port 8000",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "web": "pnpm --filter web"
+    "web": "pnpm --filter web",
+    "gen:openapi": "cd apps/api && .venv/bin/python -m scripts.export_openapi",
+    "gen:client": "pnpm --filter @repo/api-client run generate",
+    "gen": "pnpm run gen:openapi && pnpm run gen:client",
+    "gen:check": "pnpm run gen && git diff --exit-code -- apps/api/openapi.json packages/api-client/src/generated"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

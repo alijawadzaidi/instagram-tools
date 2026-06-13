@@ -17,6 +17,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
 
 from .config import settings
 from .shared.errors import ToolError
@@ -26,6 +27,13 @@ from .tools.profile.router import router as profile_router
 from .tools.transcribe.router import router as transcribe_router
 
 log = logging.getLogger("app.request")
+
+
+def custom_generate_unique_id(route: APIRoute) -> str:
+    """Stable, clean operationIds (e.g. "transcribe_start") so the generated
+    TS client gets readable function names instead of FastAPI's defaults."""
+    tag = route.tags[0] if route.tags else "default"
+    return f"{tag}_{route.name}"
 
 
 @asynccontextmanager
@@ -38,7 +46,12 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Instagram Tools API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(
+    title="Instagram Tools API",
+    version="0.1.0",
+    lifespan=lifespan,
+    generate_unique_id_function=custom_generate_unique_id,
+)
 
 app.add_middleware(
     CORSMiddleware,

@@ -3,12 +3,12 @@ import { downloadBlob } from "@/lib/download";
 
 /** Turn a profile's reels into CSV or Markdown for offline research. */
 
-function postedDate(taken_at: number | null): string {
+function postedDate(taken_at: number | null | undefined): string {
   if (!taken_at) return "";
   return new Date(taken_at * 1000).toISOString().slice(0, 10);
 }
 
-function oneLine(s: string): string {
+function oneLine(s: string | undefined): string {
   return (s ?? "").replace(/\s+/g, " ").trim();
 }
 
