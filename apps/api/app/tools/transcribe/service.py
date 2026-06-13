@@ -5,9 +5,9 @@ from __future__ import annotations
 import tempfile
 
 from ...config import settings
+from ...shared import ig_extractor
 from ...shared.audio import extract_audio
 from ...shared.downloader import download_video
-from ...shared import ig_extractor
 from ...shared.hashtags import extract_hashtags
 from .engines import get_engine
 

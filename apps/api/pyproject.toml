@@ -1,0 +1,24 @@
+# Tooling config for the API. Runtime deps stay in requirements.txt (pinned)
+# so the README install flow is unchanged.
+
+[project]
+name = "instagram-tools-api"
+version = "0.1.0"
+description = "FastAPI backend for the Instagram tools dashboard"
+requires-python = ">=3.9"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+# E/F/W core, I import order, B bugbear, UP modernize, C4 comprehensions, SIM simplify
+select = ["E", "F", "W", "I", "B", "UP", "C4", "SIM"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency idiom: Depends/Query/Header in argument defaults is correct.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Header"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -6,14 +6,17 @@ POST /tools/profile/reels  { "username": "...", "cursor": null, "page_size": 12 
 Cursor-based: omit `cursor` for the first page; pass the returned `next_cursor`
 to load the next page. One Instagram call per page. Listing is fast, so it's
 synchronous. Transcribing selected reels reuses the /tools/transcribe flow.
+
+Handlers are plain `def` on purpose: the Instagram calls are blocking I/O, and
+FastAPI runs sync handlers on its thread pool instead of stalling the event
+loop. ToolError is handled globally in main.py.
 """
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from ...shared.auth import require_internal_key
-from ...shared.errors import ToolError
 from ...shared.ig_profile import get_profile, get_reels_page
 from .schemas import (
     ProfileInfoRequest,
@@ -30,12 +33,8 @@ router = APIRouter(
 
 
 @router.post("/reels", response_model=ProfileReelsResponse)
-async def list_reels(req: ProfileReelsRequest) -> ProfileReelsResponse:
-    try:
-        page = get_reels_page(req.username, cursor=req.cursor, page_size=req.page_size)
-    except ToolError as e:
-        raise HTTPException(status_code=e.http_status, detail=e.message) from e
-
+def list_reels(req: ProfileReelsRequest) -> ProfileReelsResponse:
+    page = get_reels_page(req.username, cursor=req.cursor, page_size=req.page_size)
     return ProfileReelsResponse(
         username=req.username.lstrip("@").strip(),
         reels=[r.to_dict() for r in page.reels],
@@ -44,8 +43,5 @@ async def list_reels(req: ProfileReelsRequest) -> ProfileReelsResponse:
 
 
 @router.post("/info", response_model=ProfileInfoResponse)
-async def info(req: ProfileInfoRequest) -> ProfileInfoResponse:
-    try:
-        return ProfileInfoResponse(**get_profile(req.username).to_dict())
-    except ToolError as e:
-        raise HTTPException(status_code=e.http_status, detail=e.message) from e
+def info(req: ProfileInfoRequest) -> ProfileInfoResponse:
+    return ProfileInfoResponse(**get_profile(req.username).to_dict())

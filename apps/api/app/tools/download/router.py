@@ -7,6 +7,10 @@ POST /tools/download/zip      { urls, quality }  -> streams a zip of several ree
 Single downloads stream a file with Content-Disposition so the browser saves it.
 Bulk downloads are zipped server-side (browsers block multiple auto-downloads).
 Temp files are cleaned up after the response is sent.
+
+Handlers are plain `def` on purpose: yt-dlp/urllib are blocking I/O, and
+FastAPI runs sync handlers on its thread pool instead of stalling the event
+loop. ToolError is handled globally in main.py.
 """
 
 from __future__ import annotations
@@ -25,7 +29,7 @@ from starlette.background import BackgroundTask
 
 from ...shared import ig_http
 from ...shared.auth import require_internal_key
-from ...shared.errors import ToolError
+from ...shared.errors import DownloadError, NotFoundError, ToolError
 from ...shared.ig_download import download_one, list_qualities
 from ...shared.ig_extractor import extract_shortcode, get_cover
 from .schemas import (
@@ -47,24 +51,18 @@ router = APIRouter(
 
 
 @router.post("/formats", response_model=FormatsResponse)
-async def formats(req: FormatsRequest) -> FormatsResponse:
-    try:
-        return FormatsResponse(**list_qualities(req.url))
-    except ToolError as e:
-        raise HTTPException(status_code=e.http_status, detail=e.message) from e
+def formats(req: FormatsRequest) -> FormatsResponse:
+    return FormatsResponse(**list_qualities(req.url))
 
 
 @router.get("/file")
-async def file(
+def file(
     url: str = Query(...),
     quality: str = Query("best"),
 ) -> FileResponse:
     tmp = tempfile.mkdtemp(prefix="dl_")
     try:
         path, filename = download_one(url, quality, tmp)
-    except ToolError as e:
-        shutil.rmtree(tmp, ignore_errors=True)
-        raise HTTPException(status_code=e.http_status, detail=e.message) from e
     except Exception:
         shutil.rmtree(tmp, ignore_errors=True)
         raise
@@ -79,18 +77,15 @@ async def file(
 
 
 @router.post("/cover", response_model=CoverResponse)
-async def cover(req: CoverRequest) -> CoverResponse:
-    try:
-        cover_url = get_cover(req.url)
-    except ToolError as e:
-        raise HTTPException(status_code=e.http_status, detail=e.message) from e
+def cover(req: CoverRequest) -> CoverResponse:
+    cover_url = get_cover(req.url)
     if not cover_url:
-        raise HTTPException(status_code=404, detail="Couldn't find a cover for this reel.")
+        raise NotFoundError("Couldn't find a cover for this reel.")
     return CoverResponse(shortcode=extract_shortcode(req.url) or "", cover_url=cover_url)
 
 
 @router.get("/image")
-async def image(
+def image(
     url: str = Query(...),
     filename: str = Query("image.jpg"),
 ) -> Response:
@@ -105,7 +100,7 @@ async def image(
             data = resp.read()
             media_type = resp.headers.get_content_type() or "image/jpeg"
     except Exception as e:
-        raise HTTPException(status_code=502, detail="Couldn't fetch the image.") from e
+        raise DownloadError("Couldn't fetch the image.") from e
     return Response(
         content=data,
         media_type=media_type,
@@ -114,7 +109,7 @@ async def image(
 
 
 @router.post("/zip")
-async def zip_reels(req: ZipRequest) -> FileResponse:
+def zip_reels(req: ZipRequest) -> FileResponse:
     tmp = tempfile.mkdtemp(prefix="dlzip_")
     work = os.path.join(tmp, "items")
     os.makedirs(work, exist_ok=True)
@@ -140,10 +135,7 @@ async def zip_reels(req: ZipRequest) -> FileResponse:
 
     if succeeded == 0:
         shutil.rmtree(tmp, ignore_errors=True)
-        raise HTTPException(
-            status_code=502,
-            detail="None of the selected reels could be downloaded.",
-        )
+        raise DownloadError("None of the selected reels could be downloaded.")
 
     return FileResponse(
         zip_path,

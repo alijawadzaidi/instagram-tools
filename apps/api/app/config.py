@@ -40,5 +40,24 @@ class Settings(BaseSettings):
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
+    def validate_required(self) -> None:
+        """Fail fast at startup with one clear message instead of crashing
+        mid-request with a stack trace nobody can act on."""
+        missing = []
+        if not self.database_url:
+            missing.append("DATABASE_URL")
+        if not self.internal_api_key:
+            missing.append("INTERNAL_API_KEY")
+        if self.transcribe_engine == "openai" and not self.openai_api_key:
+            missing.append("OPENAI_API_KEY (required by TRANSCRIBE_ENGINE=openai)")
+        if self.transcribe_engine == "assemblyai" and not self.assemblyai_api_key:
+            missing.append("ASSEMBLYAI_API_KEY (required by TRANSCRIBE_ENGINE=assemblyai)")
+        if missing:
+            raise RuntimeError(
+                "Missing required settings: "
+                + ", ".join(missing)
+                + ". Copy apps/api/.env.example to apps/api/.env and fill them in."
+            )
+
 
 settings = Settings()

@@ -32,6 +32,10 @@ def _to_response(job) -> JobResponse:
     )
 
 
+# Stays `async def`: run_job schedules the work onto the running event loop
+# (asyncio.create_task) and the blocking transcription itself runs in a thread.
+# A plain `def` handler would execute on the thread pool, where there is no
+# running loop to schedule onto.
 @router.post("", response_model=JobResponse)
 async def start(req: TranscribeRequest, db: Session = Depends(get_db)) -> JobResponse:
     job = create_job(db, tool="transcribe", input_url=req.url)
@@ -45,4 +49,3 @@ async def status(job_id: str, db: Session = Depends(get_db)) -> JobResponse:
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found.")
     return _to_response(job)
-    

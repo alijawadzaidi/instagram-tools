@@ -47,7 +47,7 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
     let detail = res.statusText;
     try {
       const body = await res.json();
-      detail = body.detail ?? body.error ?? detail;
+      detail = body.message ?? body.detail ?? body.error ?? detail;
     } catch {
       // non-JSON error body; keep statusText
     }
@@ -184,7 +184,8 @@ export async function downloadZip(urls: string[], quality: string): Promise<void
   if (!res.ok) {
     let detail = res.statusText;
     try {
-      detail = (await res.json()).detail ?? detail;
+      const body = await res.json();
+      detail = body.message ?? body.detail ?? detail;
     } catch {}
     throw new Error(detail);
   }

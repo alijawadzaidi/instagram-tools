@@ -49,9 +49,13 @@ def download_video(url: str, out_dir: str) -> str:
 def _download_url(video_url: str, out_dir: str) -> str:
     """Stream a direct CDN URL to disk."""
     dest = os.path.join(out_dir, "reel.mp4")
-    req = urllib.request.Request(video_url, headers={"User-Agent": ig_http.BASE_HEADERS["User-Agent"]})
+    req = urllib.request.Request(
+        video_url, headers={"User-Agent": ig_http.BASE_HEADERS["User-Agent"]}
+    )
     try:
-        with urllib.request.urlopen(req, timeout=settings.download_timeout) as resp, open(dest, "wb") as f:
+        with urllib.request.urlopen(req, timeout=settings.download_timeout) as resp, open(
+            dest, "wb"
+        ) as f:
             while chunk := resp.read(_CHUNK):
                 f.write(chunk)
     except urllib.error.HTTPError as e:

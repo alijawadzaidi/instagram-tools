@@ -65,9 +65,15 @@ def list_qualities(url: str) -> dict:
         if not w or not h or f.get("vcodec") in (None, "none"):
             continue
         if w not in by_width or (f.get("filesize") or 0) > (by_width[w].get("filesize") or 0):
-            by_width[w] = {"width": w, "height": h, "filesize": f.get("filesize") or f.get("filesize_approx")}
+            by_width[w] = {
+                "width": w,
+                "height": h,
+                "filesize": f.get("filesize") or f.get("filesize_approx"),
+            }
 
-    qualities = [{"id": "best", "label": "Best available", "width": None, "height": None, "filesize": None}]
+    qualities = [
+        {"id": "best", "label": "Best available", "width": None, "height": None, "filesize": None}
+    ]
     for w in sorted(by_width, reverse=True):
         r = by_width[w]
         qualities.append(
