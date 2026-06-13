@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Camera, LogOut } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
-import { tools, toolHref } from "@/lib/tools";
+import { tools, toolHref } from "@/features/registry";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

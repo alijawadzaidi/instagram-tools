@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-import { tools, toolHref } from "@/lib/tools";
+import { tools, toolHref } from "@/features/registry";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,

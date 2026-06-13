@@ -73,8 +73,15 @@ Full annotated trees: `Research/06-restructure/06-proposed-structure.md` §1–2
    query (no more hand-rolled loop). Also fixed pre-existing
    set-state-in-effect lint debt (use-mobile → useSyncExternalStore) so
    `next build` is green.
-2. **Feature modules + shared components** — thin pages, `meta.ts` registry,
-   extract the 8 duplicated components/utils; ESLint zones land here.
+2. ✅ **Feature modules + shared components** (done 2026-06-13) — all 7 tools
+   are now `features/<slug>/{meta,components,index}` (+ `lib/` for hashtags/
+   export, `hooks/` for profile's batch-transcribe pool); every `page.tsx` is a
+   ~7-line shell rendering the view + exporting metadata. Extracted
+   `ToolPageShell`, `UsernameSearchForm`, `ReelUrlForm`, `StatCard`,
+   `InstagramImage`, `useCopyToClipboard`, `lib/{format,download,instagram}`.
+   Registry derived from per-feature `meta.ts` (lib/tools.ts deleted). ESLint
+   `import/no-restricted-paths` zones enforce shared→features→app and no
+   cross-feature imports (verified: both fire). tsc + next build green.
 3. **Generated client** — `packages/api-client`, delete `lib/api.ts`,
    `pnpm gen` + CI drift check.
 4. **Backend restructure** — split `shared/`, promote providers, httpx-async,

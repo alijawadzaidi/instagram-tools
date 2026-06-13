@@ -1,4 +1,5 @@
-import type { ReelSummary } from "./api";
+import type { ReelSummary } from "@/lib/api";
+import { downloadBlob } from "@/lib/download";
 
 /** Turn a profile's reels into CSV or Markdown for offline research. */
 
@@ -50,14 +51,7 @@ export function reelsToMarkdown(reels: ReelSummary[]): string {
   return [header, sep, ...lines].join("\n");
 }
 
+/** Re-export so the view imports one module. Thin wrapper over the shared util. */
 export function downloadText(filename: string, text: string, mime: string) {
-  const blob = new Blob([text], { type: mime });
-  const objUrl = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = objUrl;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(objUrl);
+  downloadBlob(filename, text, mime);
 }
