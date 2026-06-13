@@ -17,6 +17,13 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     assemblyai_api_key: str | None = None
 
+    # --- LLM (AI tools) ---
+    # Which provider AI tools use by default: "anthropic" | "openai". Per-tool /
+    # per-call overrides are possible; both providers ship from day one.
+    llm_provider: str = "anthropic"
+    llm_model: str | None = None  # None -> the provider's default model
+    anthropic_api_key: str | None = None
+
     # --- downloader / Instagram ---
     # Path to a Netscape-format cookies.txt exported from a logged-in browser.
     # Required when hosting (Instagram blocks data-center IPs); optional locally.

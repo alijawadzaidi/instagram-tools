@@ -7,6 +7,7 @@ import tempfile
 from app.core.config import settings
 from app.integrations.instagram import extractor
 from app.integrations.instagram.hashtags import extract_hashtags
+from app.jobs.handlers import job_handler
 from app.media.audio import extract_audio
 from app.media.downloader import download_video
 from app.providers.transcription import get_engine
@@ -31,3 +32,9 @@ def transcribe_reel(url: str, engine_name: str | None = None) -> dict:
     result["caption"] = caption
     result["hashtags"] = extract_hashtags(caption)
     return result
+
+
+@job_handler("transcribe")
+def run_job(params: dict) -> dict:
+    """Job entry point — reconstructs the work from the stored params."""
+    return transcribe_reel(params["url"], params.get("engine"))

@@ -20,3 +20,11 @@ async def require_internal_key(
 ) -> None:
     if not settings.internal_api_key or x_internal_key != settings.internal_api_key:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+async def current_user_id(
+    x_user_id: str | None = Header(default=None, include_in_schema=False),
+) -> str | None:
+    """The signed-in user id forwarded by the BFF proxy. Used to attribute job
+    cost/quota to a user (paid product). Also hidden from the OpenAPI schema."""
+    return x_user_id

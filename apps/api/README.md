@@ -65,10 +65,31 @@ GET  /tools/transcribe/{job_id}
 3. Run `pnpm gen` (repo root) to regenerate the typed client. Done — `main.py`
    auto-discovers the router; no shared file is edited.
 
+## Jobs (background work)
+Long work runs as a durable job: `enqueue()` stores `tool` + `params` (JSONB),
+the registered handler reconstructs the work from those params, and the result/
+token-cost is persisted. A startup **reaper** marks jobs that were "running" when
+the process died as `interrupted`. Execution is **in-process** today
+(`runner.dispatch`); a separate worker (`python -m app.jobs.worker`, claims via
+`SELECT … FOR UPDATE SKIP LOCKED`) can be enabled when a worker process is
+provisioned — no code change to tools. Per-user `user_id` + `cost_cents` columns
+back quota/billing (`jobs/quota.py` is the enforcement seam).
+
+## AI tools (convention)
+An AI tool is a normal tool that additionally:
+- puts prompt templates in `tools/<slug>/prompts.py` (versioned with the tool);
+- calls an LLM via `app.providers.llm.get_llm(settings.llm_provider)` — never a
+  vendor SDK directly (Anthropic + OpenAI ship today; swap by config);
+- registers a `@job_handler` that returns `HandlerResult(result=..., tokens_in,
+  tokens_out, cost_cents=estimate_cost_cents(...))` so spend is recorded;
+- caches results via `app.core.cache` keyed on `make_key(tool, shortcode, params)`.
+- For streaming UX, add a `GET /stream` SSE endpoint alongside the job (the BFF
+  proxy already streams bodies) — build this with the first AI tool that needs it.
+
 ## Tests
 ```bash
 pip install -r requirements-dev.txt
-pytest          # deterministic parsing + app-wiring tests (no live Instagram)
+pytest          # parsing, jobs/queue/reaper, cache, llm registry, app wiring
 ruff check app/ tests/
 ```
 

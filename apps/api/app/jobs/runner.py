@@ -1,72 +1,60 @@
-"""Background-job store backed by PostgreSQL.
+"""Job execution: load a job, run its registered handler, persist the outcome.
 
-Jobs survive server restarts and work across multiple instances.
-The public API (create_job / get_job / run_job) is the same as before —
-only the routers need to pass a db session now.
+`execute()` is the shared core used by both triggers:
+  - in-process: `dispatch()` runs it in a worker thread off the request's event
+    loop (the default today),
+  - separate process: `worker.run_worker()` claims jobs and calls `execute()`.
+
+Work is reconstructed from the stored tool+params via the handler registry, so a
+job is fully described by its DB row.
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Callable
-
-from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
 from app.core.errors import ToolError
-from app.models.job import Job
+
+from . import queue
+from .handlers import coerce, get_handler
 
 log = logging.getLogger("app.jobs")
 
 
-def create_job(db: Session, tool: str, input_url: str | None = None) -> Job:
-    job = Job(tool=tool, input_url=input_url, status="pending")
-    db.add(job)
-    db.commit()
-    db.refresh(job)
-    return job
-
-
-def get_job(db: Session, job_id: str) -> Job | None:
-    return db.get(Job, job_id)
-
-
-def _mark_error(db: Session, job: Job | None, code: str, message: str) -> None:
-    if job is None:
-        return
-    db.rollback()  # clear any failed transaction state before writing the outcome
-    job.status = "error"
-    job.error_code = code
-    job.error = message
-    db.commit()
-
-
-def run_job(job_id: str, work: Callable[[], dict[str, Any]]) -> None:
-    """Run blocking `work()` in a thread and persist the outcome to the database."""
-
-    async def _runner() -> None:
-        db = SessionLocal()
-        job: Job | None = None
-        try:
-            job = db.get(Job, job_id)
+def execute(job_id: str) -> None:
+    """Run a job to completion. Synchronous; safe to call inside a thread."""
+    db = SessionLocal()
+    try:
+        job = queue.get_job(db, job_id)
+        if job is None:
+            log.warning("job %s vanished before execution", job_id)
+            return
+        if job.status != "running":
             job.status = "running"
             db.commit()
-            log.info("job %s tool=%s running", job_id, job.tool)
-
-            result = await asyncio.to_thread(work)
-
-            job.status = "done"
-            job.result = result
-            db.commit()
-            log.info("job %s tool=%s done", job_id, job.tool)
+        log.info("job %s tool=%s running", job_id, job.tool)
+        try:
+            outcome = coerce(get_handler(job.tool)(job.params or {}))
+            queue.complete(db, job, outcome)
+            log.info(
+                "job %s tool=%s done cost_cents=%s", job_id, job.tool, outcome.cost_cents
+            )
         except ToolError as e:
             log.warning("job %s failed code=%s: %s", job_id, e.code, e.message)
-            _mark_error(db, job, e.code, e.message)
+            queue.fail(db, job, e.code, e.message)
         except Exception as e:  # noqa: BLE001 - last-resort guard for the worker
             log.exception("job %s crashed", job_id)
-            _mark_error(db, job, "internal_error", f"Unexpected error: {e}")
-        finally:
-            db.close()
+            queue.fail(db, job, "internal_error", f"Unexpected error: {e}")
+    finally:
+        db.close()
 
-    asyncio.create_task(_runner())
+
+def dispatch(job_id: str) -> None:
+    """In-process trigger: run the job in a thread off the event loop."""
+
+    async def _run() -> None:
+        await asyncio.to_thread(execute, job_id)
+
+    asyncio.create_task(_run())

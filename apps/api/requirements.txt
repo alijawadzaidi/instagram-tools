@@ -14,6 +14,11 @@ eval_type_backport==0.3.1
 #   pip install assemblyai    # for TRANSCRIBE_ENGINE=assemblyai
 faster-whisper==1.2.1
 
+# AI tools (Phase 5+). The LLM providers import their SDK lazily, so these are
+# only needed once an AI tool ships. Pin when adding the first one:
+#   pip install anthropic     # for LLM_PROVIDER=anthropic
+#   pip install openai        # for LLM_PROVIDER=openai
+
 # Database
 sqlalchemy==2.0.50
 psycopg2-binary==2.9.12

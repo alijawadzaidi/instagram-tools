@@ -58,6 +58,15 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 async def lifespan(_: FastAPI):
     setup_logging()
     settings.validate_required()
+    # Mark jobs that were "running" when a previous process died as interrupted,
+    # so they don't hang forever (Architecture/04 Phase 5). A DB hiccup at boot
+    # shouldn't stop the API from starting — log and continue.
+    try:
+        from app.jobs.reaper import reap_stale
+
+        reap_stale()
+    except Exception:
+        logging.getLogger("app").exception("startup job reaper failed")
     logging.getLogger("app").info(
         "started engine=%s cors=%s", settings.transcribe_engine, settings.cors_origins
     )

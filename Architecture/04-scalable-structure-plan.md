@@ -119,10 +119,25 @@ Full annotated trees: `Research/06-restructure/06-proposed-structure.md` §1–2
      is fixed via lazy `core/db.py`.
    - *Recorded-fixture IG tests* — need real captured responses we don't have;
      replaced with deterministic unit tests for the pure parsing logic.
-5. **Jobs platform + AI readiness** — durable queue, reaper, per-user cost
-   columns + usage ledger (paid product is planned — this is billing
-   foundation, not bookkeeping), quota hooks on enqueue, `providers/llm/` with
-   both Anthropic + OpenAI, cache. **Must land before the first AI tool ships.**
+5. ✅ **Jobs platform + AI readiness** (done 2026-06-13) — jobs are now durable
+   *data*: `enqueue` stores tool+params (JSONB), a handler registry reconstructs
+   the work, `complete/fail` persist result + token/cost; migration adds
+   `user_id`, `params`, `tokens_in/out`, `cost_cents` + indexes; startup
+   **reaper** marks interrupted jobs; `queue.claim_one` uses Postgres
+   `SKIP LOCKED` (degrades on SQLite for tests); `worker.py` is a ready
+   separate-process option (default stays in-process — worker topology is still
+   open question #1). `core/cache.py` (TTL, Redis-shaped). `providers/llm/`
+   Protocol + registry + **Anthropic + OpenAI** + pricing/cost estimation.
+   `current_user_id` plumbed from the BFF; `jobs/quota.py` is the billing seam.
+   Transcribe migrated onto enqueue/dispatch. 51 tests (jobs/cache/llm on
+   SQLite), ruff clean, contract unchanged (frontend untouched).
+
+   **Deferred on merit:** *`/zip` → job* — needs a result-file store (blob/S3)
+   that doesn't exist yet, and Phase 0 already de-blocked it (plain `def`);
+   revisit with storage. *Separate worker as the default* — gated on the
+   worker-topology decision (open question #1); the code is ready behind
+   `claim_one`/`worker.py`. *SSE streaming plumbing* — build with the first AI
+   tool that needs it (convention documented in apps/api/README).
 6. **Scaffolding** — `pnpm new-tool`, root scripts, CLAUDE.md recipe.
 
 ## Acceptance test
