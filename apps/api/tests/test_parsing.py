@@ -12,7 +12,11 @@ from app.core.errors import (
     RateLimitedError,
 )
 from app.integrations.instagram.download import _classify, _selector
-from app.integrations.instagram.extractor import extract_shortcode
+from app.integrations.instagram.extractor import (
+    _cover_from_item,
+    _video_url_from_item,
+    extract_shortcode,
+)
 from app.integrations.instagram.hashtags import extract_hashtags
 from app.integrations.instagram.profile import _decode_cursor, _encode_cursor
 
@@ -36,6 +40,38 @@ class TestExtractShortcode:
     )
     def test_none_for_non_reel(self, url):
         assert extract_shortcode(url) is None
+
+
+class TestWebInfoItemParsing:
+    """The `web_info` media item shape: video_versions / image_versions2 /
+    carousel_media (ordered largest-first)."""
+
+    def test_video_url_top_level(self):
+        item = {"video_versions": [{"url": "https://cdn/best.mp4"}, {"url": "https://cdn/sd.mp4"}]}
+        assert _video_url_from_item(item) == "https://cdn/best.mp4"
+
+    def test_video_url_descends_into_carousel(self):
+        item = {
+            "carousel_media": [
+                {"image_versions2": {"candidates": [{"url": "img"}]}},
+                {"video_versions": [{"url": "https://cdn/child.mp4"}]},
+            ]
+        }
+        assert _video_url_from_item(item) == "https://cdn/child.mp4"
+
+    def test_video_url_none_for_image_post(self):
+        assert _video_url_from_item({"image_versions2": {"candidates": [{"url": "img"}]}}) is None
+
+    def test_cover_takes_first_candidate(self):
+        item = {"image_versions2": {"candidates": [{"url": "big"}, {"url": "small"}]}}
+        assert _cover_from_item(item) == "big"
+
+    def test_cover_descends_into_carousel(self):
+        item = {"carousel_media": [{"image_versions2": {"candidates": [{"url": "child-cover"}]}}]}
+        assert _cover_from_item(item) == "child-cover"
+
+    def test_cover_empty_when_absent(self):
+        assert _cover_from_item({}) == ""
 
 
 class TestExtractHashtags:

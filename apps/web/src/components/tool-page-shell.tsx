@@ -1,38 +1,18 @@
-import type { LucideIcon } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 
 /**
- * The centered page wrapper + icon/title/subtitle header shared by every tool
- * page (replaces 7 hand-coded header blocks). Pass the icon/title from the
- * tool's meta so they can never drift from the registry.
+ * The centered width wrapper shared by every tool page. The tool's name lives in
+ * the app bar (see `header-title.tsx`), so the page itself starts straight at
+ * the input — this just constrains and centers the content column. Pass a
+ * max-width utility via `className`, e.g. "max-w-3xl".
  */
 export function ToolPageShell({
-  icon: Icon,
-  title,
-  description,
   className,
   children,
 }: {
-  icon: LucideIcon;
-  title: string;
-  description: string;
   /** max-width utility for the content column, e.g. "max-w-3xl". */
   className?: string;
   children: React.ReactNode;
 }) {
-  return (
-    <div className={cn("mx-auto w-full", className)}>
-      <div className="mb-6 flex items-center gap-3">
-        <div className="bg-soft-cloud flex size-10 items-center justify-center">
-          <Icon className="size-5" strokeWidth={1.5} />
-        </div>
-        <div>
-          <h1 className="heading-lg tracking-tight uppercase">{title}</h1>
-          <p className="caption-md text-muted-foreground">{description}</p>
-        </div>
-      </div>
-      {children}
-    </div>
-  );
+  return <div className={cn("mx-auto w-full", className)}>{children}</div>;
 }

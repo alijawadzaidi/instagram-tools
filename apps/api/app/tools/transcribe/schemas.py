@@ -28,6 +28,7 @@ class TranscriptResult(BaseModel):
     language: str | None = None
     caption: str = ""
     hashtags: list[str] = []
+    cover: str = ""  # reel cover image URL (for the result thumbnail)
 
 
 class JobResponse(BaseModel):

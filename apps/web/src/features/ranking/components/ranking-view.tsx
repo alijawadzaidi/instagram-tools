@@ -30,9 +30,6 @@ export function RankingView() {
 
   return (
     <ToolPageShell
-      icon={rankingMeta.icon}
-      title={rankingMeta.name}
-      description="Rank an account's reels by views to see what performs best."
       className="max-w-3xl"
     >
       <UsernameSearchForm

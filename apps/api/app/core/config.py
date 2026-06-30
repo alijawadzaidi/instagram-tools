@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     ig_cookies_file: str | None = None
     download_retries: int = 3
     download_timeout: int = 60
+    # The GraphQL doc_id for the no-login media (web_info) query. Instagram rotates
+    # this every few weeks as an anti-scraping measure; when the extractor starts
+    # failing, set a fresh value here (env) without a code change. See the comment
+    # in integrations/instagram/extractor.py for how to find the current one.
+    ig_web_info_doc_id: str = "24368985919464652"
 
     # --- database ---
     database_url: str = ""

@@ -74,9 +74,6 @@ export function ProfileView() {
 
   return (
     <ToolPageShell
-      icon={profileMeta.icon}
-      title={profileMeta.name}
-      description="Find a user's reels, select the ones you want, and transcribe them."
       className="max-w-5xl"
     >
       <UsernameSearchForm

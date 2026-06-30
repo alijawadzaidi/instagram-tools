@@ -9,6 +9,12 @@ __pycache__/
 venv/
 .env
 
+# Local no-infra dev DB (SQLite fallback when no DATABASE_URL is set)
+dev.db
+dev.db-journal
+dev.db-wal
+dev.db-shm
+
 # Node / Next.js
 node_modules/
 .next/

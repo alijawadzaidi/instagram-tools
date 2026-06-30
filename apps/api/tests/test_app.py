@@ -84,3 +84,32 @@ def test_validate_required_relaxed_when_bypassed():
         Settings(
             auth_disabled=False, database_url="", internal_api_key=""
         ).validate_required()
+
+
+def test_dev_sqlite_fallback_when_bypassed(monkeypatch, tmp_path):
+    """No DATABASE_URL + auth bypassed -> a local SQLite engine with the jobs
+    table ready, so job-based tools run without Postgres. Not bypassed -> raise."""
+    from sqlalchemy import inspect
+
+    from app.core import db
+
+    monkeypatch.setattr(db, "_DEV_DB_PATH", tmp_path / "dev.db")
+    monkeypatch.setattr(db.settings, "database_url", "")
+    monkeypatch.setattr(db.settings, "auth_disabled", True)
+    monkeypatch.setattr(db.settings, "environment", "development")
+    db.get_engine.cache_clear()
+    try:
+        engine = db.get_engine()
+        assert engine.dialect.name == "sqlite"
+        assert "jobs" in inspect(engine).get_table_names()
+    finally:
+        db.get_engine.cache_clear()
+
+    # without the bypass, a missing DATABASE_URL is still a hard error
+    monkeypatch.setattr(db.settings, "auth_disabled", False)
+    db.get_engine.cache_clear()
+    try:
+        with pytest.raises(RuntimeError):
+            db.get_engine()
+    finally:
+        db.get_engine.cache_clear()

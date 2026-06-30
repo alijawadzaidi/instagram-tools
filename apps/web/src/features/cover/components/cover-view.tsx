@@ -53,9 +53,6 @@ export function CoverView() {
 
   return (
     <ToolPageShell
-      icon={coverMeta.icon}
-      title={coverMeta.name}
-      description="Grab the full-resolution cover image of any reel or post."
       className="max-w-2xl"
     >
       <ReelUrlForm

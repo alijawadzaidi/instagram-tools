@@ -35,9 +35,6 @@ export function HashtagsView() {
 
   return (
     <ToolPageShell
-      icon={hashtagsMeta.icon}
-      title={hashtagsMeta.name}
-      description="See which hashtags an account uses most, and which they pair together."
       className="max-w-5xl"
     >
       <UsernameSearchForm

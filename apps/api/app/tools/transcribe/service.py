@@ -27,10 +27,11 @@ def transcribe_reel(url: str, engine_name: str | None = None) -> dict:
         transcript = engine.transcribe(audio_path)
 
     result = transcript.to_dict()
-    # Caption + hashtags come free from the reel's metadata (no audio needed).
+    # Caption, hashtags, and cover come free from the reel's metadata (no audio).
     caption = extractor.get_caption(url)
     result["caption"] = caption
     result["hashtags"] = extract_hashtags(caption)
+    result["cover"] = extractor.get_cover(url)
     return result
 
 

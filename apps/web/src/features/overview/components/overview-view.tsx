@@ -47,9 +47,6 @@ export function OverviewView() {
 
   return (
     <ToolPageShell
-      icon={overviewMeta.icon}
-      title={overviewMeta.name}
-      description="A quick audit of any public account: followers, bio, and profile picture."
       className="max-w-3xl"
     >
       <UsernameSearchForm

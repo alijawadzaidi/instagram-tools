@@ -317,6 +317,10 @@ export type TranscriptResult = {
      * Hashtags
      */
     hashtags?: Array<string>;
+    /**
+     * Cover
+     */
+    cover?: string;
 };
 
 /**

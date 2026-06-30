@@ -409,7 +409,7 @@ Web: `tsc --noEmit` + eslint are the gate today. `pnpm quick-check` runs everyth
 
 | Need | Use |
 |---|---|
-| Page header + width wrapper | `components/tool-page-shell.tsx` |
+| Centered page width wrapper | `components/tool-page-shell.tsx` (tool name shows in the app bar via `header-title.tsx`, not on the page) |
 | @username search card | `components/username-search-form.tsx` |
 | Reel URL input card | `components/reel-url-form.tsx` |
 | Big-number stat tile | `components/stat-card.tsx` |

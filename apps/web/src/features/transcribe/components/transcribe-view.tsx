@@ -11,17 +11,9 @@ import { jobQuery } from "@/queries/jobs";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { ToolPageShell } from "@/components/tool-page-shell";
 import { ReelUrlForm } from "@/components/reel-url-form";
-import { DownloadControl } from "@/components/download-control";
 import { HashtagChips } from "@/components/hashtag-chips";
+import { InstagramImage } from "@/components/instagram-image";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 import { transcribeMeta } from "../meta";
 
@@ -32,11 +24,40 @@ const STATUS_LABEL: Record<JobStatus, string> = {
   error: "Error",
 };
 
+const LABEL = "text-muted-foreground text-xs font-semibold uppercase tracking-wider";
+
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** The caption with its hashtags removed, so the chips below aren't a duplicate. */
+function captionWithoutHashtags(caption: string, hashtags: string[]): string {
+  let body = caption;
+  // Longest-first so "#ai" can't partially clip "#aitools" (the \b guards too).
+  for (const tag of [...hashtags].sort((a, b) => b.length - a.length)) {
+    body = body.replace(new RegExp(escapeRegExp(tag) + "\\b", "gi"), "");
+  }
+  return body
+    .replace(/[ \t]+/g, " ")
+    .replace(/ ?\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function wordCount(text: string): number {
+  const t = text.trim();
+  return t ? t.split(/\s+/).length : 0;
+}
+
+function reelShortcode(url: string): string | null {
+  return url.match(/\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/)?.[1] ?? null;
+}
+
 export function TranscribeView() {
   const [url, setUrl] = React.useState("");
   const [jobId, setJobId] = React.useState<string | null>(null);
-  const [downloadUrl, setDownloadUrl] = React.useState<string | null>(null);
-  const { copied, copy } = useCopyToClipboard();
+  const transcriptCopy = useCopyToClipboard();
+  const captionCopy = useCopyToClipboard();
 
   // POST to start the job; the polling query (below) takes over from its id.
   const startJob = useMutation({
@@ -63,17 +84,6 @@ export function TranscribeView() {
     }
   }, [jobQ.data?.status, jobQ.data?.error, jobQ.data?.result?.text]);
 
-  // Debounce: only expose the download control (which fetches formats) once the
-  // user has stopped typing a valid URL — avoids hammering the formats endpoint.
-  // The state update lives in the timer callback (not the effect body) so it's
-  // off the synchronous render path. Invalid input clears immediately (0ms).
-  React.useEffect(() => {
-    const trimmed = url.trim();
-    const valid = INSTAGRAM_URL.test(trimmed);
-    const t = setTimeout(() => setDownloadUrl(valid ? trimmed : null), valid ? 600 : 0);
-    return () => clearTimeout(t);
-  }, [url]);
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = url.trim();
@@ -85,13 +95,14 @@ export function TranscribeView() {
     startJob.mutate(trimmed);
   }
 
+  const caption = result ? captionWithoutHashtags(result.caption ?? "", result.hashtags ?? []) : "";
+  const hashtags = result?.hashtags ?? [];
+  const words = result ? wordCount(result.text) : 0;
+  const shortcode = reelShortcode(url);
+  const title = caption.split("\n")[0] || "Reel transcript";
+
   return (
-    <ToolPageShell
-      icon={transcribeMeta.icon}
-      title={transcribeMeta.name}
-      description="Paste a public Instagram reel or post link to get its transcript."
-      className="max-w-3xl"
-    >
+    <ToolPageShell className="max-w-5xl">
       <ReelUrlForm
         value={url}
         onChange={setUrl}
@@ -104,59 +115,91 @@ export function TranscribeView() {
         loadingLabel={status ? STATUS_LABEL[status] : "Working…"}
       />
 
-      {downloadUrl && (
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle className="text-base">Download this reel</CardTitle>
-            <CardDescription>Pick a quality, or grab the audio only.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DownloadControl url={downloadUrl} />
-          </CardContent>
-        </Card>
-      )}
-
       {result && (
-        <Card className="mt-4">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <div>
-              <CardTitle className="text-base">Transcript</CardTitle>
+        <div className="border-hairline bg-card mt-4 border">
+          {/* reel context — anchors the result */}
+          <div className="border-hairline flex items-center justify-between gap-4 border-b px-5 py-4">
+            <div className="flex min-w-0 items-center gap-3">
+              {result.cover ? (
+                <InstagramImage
+                  src={result.cover}
+                  alt=""
+                  className="size-12 flex-none rounded-md object-cover"
+                />
+              ) : (
+                <div className="bg-soft-cloud text-muted-foreground flex size-12 flex-none items-center justify-center rounded-md text-sm">
+                  ▶
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{title}</p>
+                {shortcode && (
+                  <p className="text-muted-foreground truncate text-xs">
+                    instagram.com/reel/{shortcode}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-none flex-wrap justify-end gap-1.5">
               {result.language && (
-                <CardDescription>Detected language: {result.language}</CardDescription>
+                <span className="bg-soft-cloud text-muted-foreground rounded-full px-3 py-1 text-xs">
+                  {result.language}
+                </span>
+              )}
+              {words > 0 && (
+                <span className="bg-soft-cloud text-muted-foreground rounded-full px-3 py-1 text-xs">
+                  {words} words
+                </span>
               )}
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => copy(result.text, "Transcript copied.")}
-            >
-              {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-              {copied ? "Copied" : "Copy"}
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              readOnly
-              value={result.text || "(No speech detected in this reel.)"}
-              className="min-h-48 resize-y"
-            />
-          </CardContent>
-        </Card>
-      )}
+          </div>
 
-      {result && (result.caption || (result.hashtags && result.hashtags.length > 0)) && (
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle className="text-base">Caption &amp; hashtags</CardTitle>
-            <CardDescription>How this creator wrote the post.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {result.caption && (
-              <Textarea readOnly value={result.caption} className="min-h-24 resize-y text-sm" />
-            )}
-            <HashtagChips hashtags={result.hashtags ?? []} />
-          </CardContent>
-        </Card>
+          {/* transcript */}
+          <section className="border-hairline border-b px-5 py-4">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className={LABEL}>Transcript</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => transcriptCopy.copy(result.text, "Transcript copied.")}
+              >
+                {transcriptCopy.copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                {transcriptCopy.copied ? "Copied" : "Copy"}
+              </Button>
+            </div>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              {result.text || "(No speech detected in this reel.)"}
+            </p>
+          </section>
+
+          {/* caption (hashtags stripped — they live in the chips below) */}
+          {caption && (
+            <section className="border-hairline border-b px-5 py-4">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <h3 className={LABEL}>Caption</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => captionCopy.copy(caption, "Caption copied.")}
+                >
+                  {captionCopy.copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                  {captionCopy.copied ? "Copied" : "Copy"}
+                </Button>
+              </div>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">{caption}</p>
+            </section>
+          )}
+
+          {/* hashtags — shown once, as chips with their own copy-all */}
+          {hashtags.length > 0 && (
+            <section className="px-5 py-4">
+              <h3 className={`${LABEL} mb-2`}>Hashtags · {hashtags.length}</h3>
+              <HashtagChips hashtags={hashtags} />
+            </section>
+          )}
+        </div>
       )}
     </ToolPageShell>
   );

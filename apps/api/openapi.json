@@ -947,6 +947,11 @@
             "type": "array",
             "title": "Hashtags",
             "default": []
+          },
+          "cover": {
+            "type": "string",
+            "title": "Cover",
+            "default": ""
           }
         },
         "type": "object",

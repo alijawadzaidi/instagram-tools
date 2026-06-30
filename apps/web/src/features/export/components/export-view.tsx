@@ -28,9 +28,6 @@ export function ExportView() {
 
   return (
     <ToolPageShell
-      icon={exportMeta.icon}
-      title={exportMeta.name}
-      description="Export a profile's reels (link, date, views, hashtags, caption) to a file."
       className="max-w-2xl"
     >
       <UsernameSearchForm
