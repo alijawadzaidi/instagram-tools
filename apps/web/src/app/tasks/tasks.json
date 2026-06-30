@@ -1,0 +1,240 @@
+{
+  "phases": [
+    {
+      "id": "a",
+      "title": "Phase A — Decide + design",
+      "subtitle": "Before any feature code",
+      "tasks": [
+        {
+          "id": "a-pricing",
+          "title": "Pick the pricing model",
+          "note": "tiers, prices, free-grant size, what credits buy",
+          "detail": "Decide the tier structure and what one credit actually buys. This is first because everything downstream — the credit ledger, the Stripe products, the quota limits — is shaped by it. Research recommendation: a real free tier + ~$19 + ~$39, with 1 credit ≈ $0.01–0.02 and credits scaled to transcription minutes + LLM tokens. The output of this task is just a written decision, no code.",
+          "done": false
+        },
+        {
+          "id": "a-payments",
+          "title": "Pick payments provider",
+          "note": "Stripe vs Merchant-of-Record (Paddle / Lemon Squeezy)",
+          "detail": "Choose how money is collected. Stripe = you are the merchant of record (you handle global VAT/GST yourself) but it has a first-party better-auth plugin and native support for usage/credits. Paddle / Lemon Squeezy are merchants-of-record — they collect and file tax for you, for ~2% higher fees. This choice determines which integration you build in Phase B.",
+          "done": false
+        },
+        {
+          "id": "a-proxy",
+          "title": "Pick proxy strategy",
+          "note": "own proxies vs 3rd-party fetch API vs cookies — the launch blocker",
+          "detail": "Instagram blocks data-center IPs — the scraping/download technique only works from a residential IP (like your home machine). Before the product can be hosted at all, you must choose one of: rotating residential/mobile proxies, a 3rd-party fetch API, or a logged-in cookie session. This is the single biggest launch risk, and its recurring cost feeds directly into how you price credits.",
+          "done": false
+        },
+        {
+          "id": "a-schema",
+          "title": "Design the DB schema",
+          "note": "credits ledger + grants + usage_events + billing/payment_event",
+          "detail": "Design all the new database tables on paper up front (credit ledger, free-credit grants, usage events, the Stripe subscription/invoice mirror, and a payment_events table for webhook idempotency) so future migrations are additive instead of a rewrite. The ledger is append-only — every grant/spend/refund is a new immutable row — and balances are cached for fast reads.",
+          "done": false
+        },
+        {
+          "id": "a-tenant",
+          "title": "Add tenant_id seam",
+          "note": "= user_id today; makes future orgs additive",
+          "detail": "Add a tenant_id column (set equal to user_id for now) to every user-owned table. It costs nothing today, but it's the one decision that turns 'add teams/organizations later' from a painful rewrite into a simple data backfill. Cheap insurance.",
+          "done": false
+        },
+        {
+          "id": "a-migration",
+          "title": "Write the Alembic migration(s)",
+          "note": "for the new tables",
+          "detail": "Turn the schema design into actual Alembic migration files. Alembic is already set up in the repo (two migrations exist), so these new tables are just new revision files — no baselining needed. Run them in the deploy pipeline before shipping the code that uses them.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "title": "Phase B — Monetization rails",
+      "subtitle": "After this, you can charge money",
+      "tasks": [
+        {
+          "id": "b-ledger",
+          "title": "Build the credit ledger",
+          "note": "append-only + cached balance",
+          "detail": "Build the actual credits system: an append-only ledger table (every grant, purchase, spend, and refund is one immutable row) plus a cached per-user balance for fast reads. This is what answers 'how many credits does this user have left?'. Copy a proven pattern (pgledger / token_ledger) rather than inventing one.",
+          "done": false
+        },
+        {
+          "id": "b-reserve",
+          "title": "Wire reserve/settle to jobs",
+          "note": "reserve on enqueue, settle on complete, release on fail/reaper",
+          "detail": "Hook the ledger into the job lifecycle. When a job is enqueued, reserve an estimated cost (a hold); on completion, charge the real amount and refund the difference; on failure — including jobs the reaper cleans up after a crash — release the hold entirely. This is what prevents both overspend and accidental double-charging.",
+          "done": false
+        },
+        {
+          "id": "b-quota",
+          "title": "Enforce check_quota",
+          "note": "make the existing stub actually check balance/limits",
+          "detail": "The check_quota() function already exists as an empty stub that's called at job-enqueue time. Make it real: check the user's balance and plan limits, and reject with HTTP 402 when they're out of credits. This is the single chokepoint where access is enforced.",
+          "done": false
+        },
+        {
+          "id": "b-stripe",
+          "title": "Integrate Stripe via @better-auth/stripe",
+          "note": "subscriptions",
+          "detail": "Wire up the official better-auth Stripe plugin so users can subscribe to a plan. It auto-creates a Stripe customer on signup, manages the subscription table, and handles the subscription webhooks for you — so you don't hand-roll the hard parts.",
+          "done": false
+        },
+        {
+          "id": "b-credits",
+          "title": "Add credit-pack purchases",
+          "note": "one-time Checkout → top up the ledger",
+          "detail": "Let users buy one-time credit packs (top-ups) through Stripe Checkout. On a successful payment, append a +credits row to the ledger. This is the prepaid half of the hybrid pricing model and removes the 'I hit the wall mid-task' churn moment.",
+          "done": false
+        },
+        {
+          "id": "b-webhooks",
+          "title": "Handle webhooks",
+          "note": "verify signature, dedupe on event id, refetch live object",
+          "detail": "Process Stripe webhooks safely: verify the signature, return 200 immediately, dedupe on the Stripe event id (retries arrive more than once), and refetch the live object instead of trusting the payload's ordering. Webhooks — not your guesses — are the source of truth for billing state.",
+          "done": false
+        },
+        {
+          "id": "b-billing-ui",
+          "title": "Build the billing UI",
+          "note": "plan, balance, buy credits, history",
+          "detail": "The user-facing billing screen: current plan, credit balance, a buy-credits button, and invoice/usage history. Closes the loop so people can actually pay and manage their own account without you in the middle.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "c",
+      "title": "Phase C — Flagship paid tools",
+      "subtitle": "The transcript wedge — what people pay for",
+      "tasks": [
+        {
+          "id": "c-repurposer",
+          "title": "Reel Repurposer (AI)",
+          "note": "build first — validates the AI + credits path",
+          "detail": "First AI tool: turn a reel's transcript into a tweet thread / blog post / YouTube description / summary. Build it first because it exercises the entire new path end-to-end (LLM provider → cost tracking → credit reserve/settle → job result). It's also the clearest differentiator — competitors don't produce transcripts, so they can't do this well.",
+          "done": false
+        },
+        {
+          "id": "c-search",
+          "title": "Transcript Search",
+          "note": "search a creator's reels by spoken content",
+          "detail": "Let a user search everything a creator has actually said across all their reels ('find every reel where they mention X') and surface recurring themes. Only possible because we transcribe — no competitor exposes the spoken text. Adjacent features sell for $99+ (Shortimize), so willingness-to-pay is proven.",
+          "done": false
+        },
+        {
+          "id": "c-hooks",
+          "title": "Hook Analyzer (AI)",
+          "note": "classify reel/caption hooks",
+          "detail": "Analyze the opening of each reel (first spoken line + first caption line) and classify the hook pattern. Helps creators see which openings drive their best-performing reels. Competes with Retensis, but grounded in real transcript data from the account's actual top reels.",
+          "done": false
+        },
+        {
+          "id": "c-besttime",
+          "title": "Best Time to Post",
+          "note": "free funnel tool",
+          "detail": "A day×hour heatmap of when an account posts and which windows correlate with more views. Every analytics tool has this — so it's a free funnel tool to pull users in, not a paid pillar. No AI cost; it's pure composition over reel data we already fetch. Good first build to validate the new scaffolding too.",
+          "done": false
+        },
+        {
+          "id": "c-compare",
+          "title": "Competitor Compare",
+          "note": "free funnel tool",
+          "detail": "Put two or more accounts side by side: followers, posting cadence, avg/median views, top reels, hashtag overlap. Another free funnel tool — pure composition over existing endpoints, so it needs no new backend module.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "d",
+      "title": "Phase D — Launch readiness",
+      "tasks": [
+        {
+          "id": "d-proxy",
+          "title": "Resolve hosting/IP",
+          "note": "implement chosen proxy strategy; verify from data-center",
+          "detail": "Actually implement the proxy strategy you chose in Phase A and verify the scraping works from your hosted (data-center) server, not just your home IP. Without this, the hosted product literally cannot fetch Instagram data — it's the hard launch gate.",
+          "done": false
+        },
+        {
+          "id": "d-pgbouncer",
+          "title": "Add PgBouncer",
+          "note": "connection pooling",
+          "detail": "Add a connection pooler. FastAPI opens many short-lived database connections, and Postgres runs out of connection slots long before it runs out of CPU. This is the first and cheapest scaling step, and you want it in place before real traffic arrives.",
+          "done": false
+        },
+        {
+          "id": "d-observability",
+          "title": "Add observability",
+          "note": "Sentry + PostHog",
+          "detail": "Add error tracking (Sentry) and product analytics (PostHog is already connected to the project). You can't run a paid product blind — you need to see crashes and understand usage. Right now there's neither.",
+          "done": false
+        },
+        {
+          "id": "d-ratelimit",
+          "title": "Add rate limiting at the proxy",
+          "note": "free-tier abuse protection",
+          "detail": "Add rate limiting at the BFF proxy so the free tier can't be abused — e.g. someone scripting the expensive scraping or AI endpoints. Protects both your margins and overall stability before you open the doors.",
+          "done": false
+        },
+        {
+          "id": "d-polish",
+          "title": "Polish",
+          "note": "transcript output UX, large-account paging",
+          "detail": "Pre-launch UX cleanup from the backlog: a proper transcript results view (the current in-card display is cramped and hard to copy/export) and a 'load more' for very large accounts that exceed the current cap.",
+          "done": false
+        },
+        {
+          "id": "d-reconcile",
+          "title": "Reconciliation job",
+          "note": "ledger balance vs sum-of-entries check",
+          "detail": "A periodic job that checks the cached credit balance against the actual sum of ledger entries (and usage events against ledger spend). Cheap insurance that catches drift or bugs in the credits system before they turn into billing disputes.",
+          "done": false
+        },
+        {
+          "id": "d-launch",
+          "title": "🚀 Paid launch",
+          "detail": "Flip the switch: open paid signups. This is gated behind everything above being done.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "e",
+      "title": "Phase E — Grow",
+      "subtitle": "After launch, as needed",
+      "tasks": [
+        {
+          "id": "e-tools",
+          "title": "More no-login tools",
+          "note": "Trending Audio, Hashtag Set Generator, Content-Style Report",
+          "detail": "More low-effort no-login tools once the core is live: Trending Audio (which sounds an account reuses), Hashtag Set Generator (a ready-to-paste tag block), and Content-Style Report (a summary of how an account operates). They broaden the free funnel cheaply.",
+          "done": false
+        },
+        {
+          "id": "e-login",
+          "title": "Login-gated tier",
+          "note": "start with Real Engagement Analytics",
+          "detail": "Add the logged-in Instagram tier, starting with Real Engagement Analytics (saves, shares, reach, completion rate) — the data Instagram hides from anonymous users. It upgrades Best Time, Top Reels, and Hook Analyzer. Needs IG session cookies plus proxies, with higher blocking risk.",
+          "done": false
+        },
+        {
+          "id": "e-scale",
+          "title": "Scale infra as needed",
+          "note": "read replicas → partitioning → sharding",
+          "detail": "Scale the database only as load actually demands, in order: read replicas first → partition the big append-only tables (jobs, ledger, payment_events) by date → shard by tenant_id with Citus as a last resort. Don't do any of this prematurely.",
+          "done": false
+        },
+        {
+          "id": "e-orgs",
+          "title": "Teams/orgs",
+          "note": "the tenant_id seam makes it additive",
+          "detail": "Add teams/organizations so multiple users can share a workspace and billing. Because of the tenant_id seam added in Phase A, this is an additive change rather than a schema rewrite.",
+          "done": false
+        }
+      ]
+    }
+  ]
+}

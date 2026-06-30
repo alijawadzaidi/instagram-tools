@@ -10,6 +10,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Protect everything except the auth pages, API routes, and Next.js internals
-  matcher: ["/((?!sign-in|api|_next|favicon).*)"],
+  // Protect everything except the auth pages, API routes, Next.js internals,
+  // and the ungated /tasks checklist.
+  matcher: ["/((?!sign-in|api|_next|favicon|tasks).*)"],
 };
