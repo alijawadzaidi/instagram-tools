@@ -39,6 +39,16 @@ class Settings(BaseSettings):
     # this in the X-Internal-Key header.
     internal_api_key: str = ""
 
+    # --- dev auth bypass ---
+    # Deployment environment. The bypass is HARD-disabled unless this is non-prod.
+    environment: str = "development"
+    # When true (and not production), the whole auth layer is skipped: the
+    # internal-key check is a no-op and requests are attributed to dev_user_id.
+    # One shared env var drives both apps: `AUTH_DISABLED=true pnpm dev`.
+    auth_disabled: bool = False
+    # Synthetic user id used to attribute jobs/quota while auth is bypassed.
+    dev_user_id: str = "dev-user"
+
     # --- web/server ---
     # Comma-separated list of allowed CORS origins for the Next.js frontend.
     cors_origins: str = "http://localhost:3000"
@@ -47,13 +57,20 @@ class Settings(BaseSettings):
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
+    @property
+    def auth_bypassed(self) -> bool:
+        """True only when explicitly disabled AND not in production — so a stray
+        AUTH_DISABLED in a prod environment can never open the door."""
+        return self.auth_disabled and self.environment != "production"
+
     def validate_required(self) -> None:
         """Fail fast at startup with one clear message instead of crashing
         mid-request with a stack trace nobody can act on."""
         missing = []
         if not self.database_url:
             missing.append("DATABASE_URL")
-        if not self.internal_api_key:
+        # When auth is bypassed the internal key is unused, so don't require it.
+        if not self.internal_api_key and not self.auth_bypassed:
             missing.append("INTERNAL_API_KEY")
         if self.transcribe_engine == "openai" and not self.openai_api_key:
             missing.append("OPENAI_API_KEY (required by TRANSCRIBE_ENGINE=openai)")

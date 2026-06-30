@@ -58,6 +58,13 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 async def lifespan(_: FastAPI):
     setup_logging()
     settings.validate_required()
+    if settings.auth_bypassed:
+        logging.getLogger("app").warning(
+            "AUTH BYPASSED (AUTH_DISABLED=true, env=%s) — internal-key check off, "
+            "requests attributed to %r. Never use this in production.",
+            settings.environment,
+            settings.dev_user_id,
+        )
     # Mark jobs that were "running" when a previous process died as interrupted,
     # so they don't hang forever (Architecture/04 Phase 5). A DB hiccup at boot
     # shouldn't stop the API from starting — log and continue.

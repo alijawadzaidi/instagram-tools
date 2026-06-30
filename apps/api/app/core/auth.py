@@ -16,8 +16,11 @@ from app.core.config import settings
 # appear in the OpenAPI contract (otherwise the generated client would require
 # every caller to pass it).
 async def require_internal_key(
-    x_internal_key: str = Header(..., include_in_schema=False),
+    x_internal_key: str | None = Header(default=None, include_in_schema=False),
 ) -> None:
+    # Dev bypass: skip the internal-key check entirely (see settings.auth_bypassed).
+    if settings.auth_bypassed:
+        return
     if not settings.internal_api_key or x_internal_key != settings.internal_api_key:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -27,4 +30,7 @@ async def current_user_id(
 ) -> str | None:
     """The signed-in user id forwarded by the BFF proxy. Used to attribute job
     cost/quota to a user (paid product). Also hidden from the OpenAPI schema."""
+    # Dev bypass: attribute work to a synthetic user when no real id is present.
+    if settings.auth_bypassed and not x_user_id:
+        return settings.dev_user_id
     return x_user_id

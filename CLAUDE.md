@@ -34,6 +34,9 @@ pnpm dev                 # web (:3000) + api (:8000) together
 pnpm dev:web             # just Next.js
 pnpm dev:api             # just FastAPI (uvicorn --reload)
 
+# run with NO auth (no OAuth / DB session / internal key) — both apps, one var:
+AUTH_DISABLED=true pnpm dev   # dev-only; ignored when NODE_ENV/ENVIRONMENT=production
+
 # scaffolding
 pnpm new-tool <slug>     # generate a whole tool, then run `pnpm gen`
 pnpm new-tool <slug> --name "Display Name" --desc "One-liner"
@@ -205,9 +208,11 @@ After editing any `schemas.py`, run `pnpm gen` — never hand-edit types or
 Product logic lives **only** in `tools/<slug>/`. Everything else is reusable
 infrastructure it composes:
 
-- `core/` — `config` (env settings; flat names, validated at startup), `db`
-  (Base + lazy engine/session — never created at import time), `errors`
-  (`ToolError` taxonomy), `auth` (internal-key + `current_user_id` deps),
+- `core/` — `config` (env settings; flat names, validated at startup; exposes
+  `auth_bypassed` — `AUTH_DISABLED=true` + non-prod → skip auth, attribute to
+  `dev_user_id`), `db` (Base + lazy engine/session — never created at import
+  time), `errors` (`ToolError` taxonomy), `auth` (internal-key +
+  `current_user_id` deps, both honor `auth_bypassed`),
   `logging`, `cache`.
 - `integrations/instagram/` — the no-login client. `http` (request primitives),
   `session` (cookie warmup, cached process-wide), `extractor` (single reel),

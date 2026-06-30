@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
 
+import { DEV_USER_ID, isAuthBypassed } from "@/lib/dev-auth";
+
 const FASTAPI_URL = process.env.INTERNAL_API_URL ?? "http://localhost:8000";
 const INTERNAL_KEY = process.env.INTERNAL_API_KEY ?? "";
 
@@ -15,9 +17,8 @@ const SESSION_TTL_MS = 60 * 1000;
 const sessionCache = new Map<string, { userId: string; expires: number }>();
 
 async function getUserId(request: NextRequest): Promise<string | null> {
-  // TEMP: auth bypassed in development for local browsing (no DB / OAuth needed).
-  // Production still resolves the real session. Delete this line to require it in dev.
-  if (process.env.NODE_ENV !== "production") return "dev-user";
+  // Dev bypass: attribute requests to a synthetic user, skipping session lookup.
+  if (isAuthBypassed()) return DEV_USER_ID;
 
   const cookie = request.headers.get("cookie");
   if (!cookie) return null;

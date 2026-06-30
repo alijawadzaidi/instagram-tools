@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
+import { isAuthBypassed } from "@/lib/dev-auth";
+
 export function middleware(request: NextRequest) {
-  // TEMP: auth bypassed in development for local browsing (no DB / OAuth needed).
-  // Production still enforces. Delete this line to require sign-in in dev too.
-  if (process.env.NODE_ENV !== "production") return NextResponse.next();
+  // Dev bypass: when AUTH_DISABLED=true (non-prod only), skip the sign-in gate.
+  if (isAuthBypassed()) return NextResponse.next();
 
   const sessionCookie = getSessionCookie(request);
   if (!sessionCookie) {
