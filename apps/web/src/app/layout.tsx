@@ -1,21 +1,23 @@
 import type { Metadata } from "next";
-import { Inter, Manrope, Geist_Mono } from "next/font/google";
+import { Inter, Bebas_Neue, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 
-// Inter for body/UI; Manrope (heavy weights) as the Wise Sans display substitute.
+// Inter for all UI/body (Helvetica Now substitute).
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
 });
 
-// Manrope is a variable font (200–800); omitting `weight` loads the full range.
-const manrope = Manrope({
-  variable: "--font-manrope",
+// Bebas Neue: condensed uppercase display, the Futura ND substitute for the
+// towering campaign headline tier. Single weight (400).
+const bebas = Bebas_Neue({
+  variable: "--font-bebas",
   subsets: ["latin"],
+  weight: ["400"],
 });
 
 const geistMono = Geist_Mono({
@@ -37,7 +39,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${inter.variable} ${manrope.variable} ${geistMono.variable} min-h-svh antialiased`}
+        className={`${inter.variable} ${bebas.variable} ${geistMono.variable} min-h-svh antialiased`}
       >
         <ThemeProvider
           attribute="class"

@@ -1,33 +1,36 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, Camera, Download, FileText } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Camera } from "lucide-react";
 
 import { tools, toolHref } from "@/features/registry";
 import { Band } from "@/components/band";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export default function LandingPage() {
   const liveCount = tools.filter((t) => t.status === "live").length;
 
   return (
-    <div className="bg-background flex min-h-svh flex-col">
-      {/* Nav */}
-      <header className="bg-card/80 sticky top-0 z-30 border-b backdrop-blur">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-2 px-6">
+    <div className="bg-canvas text-ink flex min-h-svh flex-col">
+      {/* Utility bar */}
+      <div className="bg-soft-cloud">
+        <div className="caption-sm text-mute mx-auto flex h-9 w-full max-w-7xl items-center justify-end px-6">
+          No login required · {liveCount} tools live
+        </div>
+      </div>
+
+      {/* Primary nav */}
+      <header className="border-hairline-soft bg-canvas sticky top-0 z-30 border-b">
+        <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-3 px-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+            <span className="bg-ink text-canvas flex aspect-square size-8 items-center justify-center">
               <Camera className="size-4" />
             </span>
-            <span className="body-md-strong">Instagram Tools</span>
+            <span className="body-strong tracking-tight uppercase">
+              Instagram Tools
+            </span>
           </Link>
-          <nav className="ml-auto flex items-center gap-1">
+          <nav className="ml-auto flex items-center gap-2">
             <Button variant="ghost" size="sm" render={<Link href="#tools" />}>
               Tools
             </Button>
@@ -40,31 +43,30 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1">
-        {/* Hero band — sage canvas, weight-800 display */}
-        <Band variant="sage" className="py-16 md:py-24">
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge variant="positive" className="mb-5">
-              {liveCount} tools live · no login required
-            </Badge>
-            <h1 className="display-xl text-balance">
-              Pull any Instagram reel apart
+        {/* Campaign hero — ink block, towering uppercase display */}
+        <Band variant="dark" className="py-20 md:py-28">
+          <div className="max-w-4xl">
+            <span className="caption-sm text-stone tracking-[0.18em] uppercase">
+              Instagram intelligence
+            </span>
+            <h1 className="display-campaign mt-4">
+              Pull any reel apart
             </h1>
-            <p className="body-lg text-muted-foreground mx-auto mt-5 max-w-2xl text-pretty">
+            <p className="body-md text-stone mt-6 max-w-xl">
               Transcribe, analyze, and download — built on transcripts nobody
               else exposes. Paste a link and go.
             </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <div className="mt-10 flex flex-wrap items-center gap-3">
               <Button
                 size="lg"
-                className="body-md-strong h-11 px-6"
+                className="bg-canvas text-ink body-strong h-12 px-8 hover:bg-white/90"
                 render={<Link href="/dashboard" />}
               >
                 Open the toolset <ArrowRight className="size-4" />
               </Button>
               <Button
                 size="lg"
-                variant="tertiary"
-                className="body-md-strong h-11 px-6"
+                className="text-canvas body-strong hover:bg-canvas/10 h-12 border border-white/40 bg-transparent px-8"
                 render={<Link href="#tools" />}
               >
                 Browse tools
@@ -73,104 +75,67 @@ export default function LandingPage() {
           </div>
         </Band>
 
-        {/* Feature trio — white band, showcasing the card variants */}
-        <Band variant="white">
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card variant="sage">
-              <CardHeader>
-                <FileText className="size-6" />
-                <CardTitle className="display-xs mt-3">Transcribe reels</CardTitle>
-                <CardDescription className="body-md">
-                  Turn spoken audio into searchable text — the foundation
-                  everything else is built on.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card variant="green">
-              <CardHeader>
-                <BarChart3 className="size-6" />
-                <CardTitle className="display-xs mt-3">Analyze profiles</CardTitle>
-                <CardDescription className="body-md">
-                  Top reels, hashtags, posting cadence, and an at-a-glance
-                  overview of any public account.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card variant="dark">
-              <CardHeader>
-                <Download className="size-6" />
-                <CardTitle className="display-xs mt-3">Download anything</CardTitle>
-                <CardDescription className="body-md text-canvas-soft/80">
-                  Covers, reels, and bulk exports — grab the media you need in a
-                  couple of clicks.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </Band>
-
-        {/* Tool grid — sage band, white cards */}
-        <Band variant="sage" id="tools">
-          <div className="mb-8">
-            <h2 className="display-md">Everything in the box</h2>
-            <p className="body-md text-muted-foreground mt-2">
-              Each tool runs on its own — pick one to get started.
-            </p>
+        {/* Featured tools — flat product-card grid on white */}
+        <Band variant="white" id="tools" className="py-12 md:py-16">
+          <div className="border-hairline mb-8 flex items-end justify-between border-b pb-4">
+            <h2 className="heading-xl tracking-tight uppercase">Featured tools</h2>
+            <span className="caption-md text-mute">{tools.length} total</span>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
             {tools.map((tool) => {
               const isSoon = tool.status === "soon";
               const Icon = tool.icon;
 
-              const card = (
-                <Card className="group h-full transition-colors hover:border-foreground/20">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="bg-muted flex size-10 items-center justify-center rounded-lg">
-                        <Icon className="size-5" />
-                      </div>
-                      {isSoon ? (
-                        <Badge variant="secondary">Soon</Badge>
-                      ) : (
-                        <ArrowRight className="text-muted-foreground size-4 transition-transform group-hover:translate-x-0.5" />
-                      )}
-                    </div>
-                    <CardTitle className="display-xs mt-3">{tool.name}</CardTitle>
-                    <CardDescription className="body-sm">
+              const inner = (
+                <>
+                  <div className="bg-soft-cloud relative flex aspect-[4/3] items-center justify-center">
+                    <Icon className="size-10" strokeWidth={1.5} />
+                    {isSoon ? (
+                      <Badge
+                        variant="promo"
+                        className="absolute left-3 top-3"
+                      >
+                        Coming soon
+                      </Badge>
+                    ) : (
+                      <ArrowUpRight className="absolute right-3 top-3 size-5 opacity-0 transition-opacity group-hover:opacity-100" />
+                    )}
+                  </div>
+                  <div className="mt-3">
+                    <h3 className="body-strong">{tool.name}</h3>
+                    <p className="caption-md text-mute mt-1">
                       {tool.description}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
+                    </p>
+                  </div>
+                </>
               );
 
               return isSoon ? (
-                <div key={tool.slug} className="cursor-not-allowed opacity-70">
-                  {card}
+                <div
+                  key={tool.slug}
+                  className="cursor-not-allowed opacity-60"
+                >
+                  {inner}
                 </div>
               ) : (
-                <Link
-                  key={tool.slug}
-                  href={toolHref(tool.slug)}
-                  className="block"
-                >
-                  {card}
+                <Link key={tool.slug} href={toolHref(tool.slug)} className="group block">
+                  {inner}
                 </Link>
               );
             })}
           </div>
         </Band>
 
-        {/* Closing CTA — polarity-flipped dark band, lime headline */}
-        <Band variant="dark" className="text-center">
-          <h2 className="display-md mx-auto max-w-2xl">Start pulling reels apart.</h2>
-          <p className="body-lg text-canvas-soft/80 mx-auto mt-4 max-w-xl">
-            No account needed to try the free tools.
-          </p>
-          <div className="mt-8 flex justify-center">
+        {/* Closing CTA — ink band */}
+        <Band variant="dark" className="py-16 md:py-20">
+          <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
+            <h2 className="heading-xl tracking-tight uppercase">
+              Start pulling reels apart
+            </h2>
             <Button
               size="lg"
-              className="body-md-strong h-11 px-6"
+              className="bg-canvas text-ink body-strong h-12 shrink-0 px-8 hover:bg-white/90"
               render={<Link href="/dashboard" />}
             >
               Open the toolset <ArrowRight className="size-4" />
@@ -179,10 +144,12 @@ export default function LandingPage() {
         </Band>
       </main>
 
-      <footer className="bg-ink text-canvas-soft">
-        <div className="body-sm mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-8">
-          <span>Instagram Tools</span>
-          <Link href="/dashboard" className="hover:text-primary">
+      <footer className="border-hairline border-t">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-8">
+          <span className="body-strong tracking-tight uppercase">
+            Instagram Tools
+          </span>
+          <Link href="/dashboard" className="caption-md text-mute hover:text-ink">
             Open dashboard →
           </Link>
         </div>

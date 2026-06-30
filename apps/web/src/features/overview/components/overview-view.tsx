@@ -73,7 +73,7 @@ export function OverviewView() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <span className="truncate text-lg font-semibold">{info.full_name || info.username}</span>
-                  {info.is_verified && <BadgeCheck className="size-4 shrink-0 text-accent-cyan" />}
+                  {info.is_verified && <BadgeCheck className="size-4 shrink-0 text-info" />}
                   {info.is_private && <Lock className="text-muted-foreground size-3.5 shrink-0" />}
                 </div>
                 <div className="text-muted-foreground text-sm">@{info.username}</div>

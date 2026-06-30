@@ -52,7 +52,7 @@ export function ReelCard({
         {state && state.status !== "idle" && (
           <div className="absolute left-2 top-2">
             {state.status === "done" ? (
-              <Badge className="bg-positive text-white">Done</Badge>
+              <Badge className="bg-success text-white">Done</Badge>
             ) : state.status === "error" ? (
               <Badge variant="destructive">Error</Badge>
             ) : (

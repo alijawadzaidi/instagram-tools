@@ -5,15 +5,17 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  Wise-inspired design system (see DESIGN.md).
-  The raw brand palette lives as --canvas/--ink/--positive/... in :root, and is
-  mapped onto shadcn's semantic tokens (--background, --primary, ...) below.
-  Custom brand tokens are exposed as Tailwind utilities here (e.g. bg-positive,
-  text-accent-cyan, bg-primary-pale).
+  Nike-inspired design system (see nike/DESIGN.md).
+  Near-monochrome: ink (#111) + canvas (#fff) + one soft-cloud gray carry ~95%
+  of the chrome. Colour is reserved for sale/success/info and editorial accents.
+  Geometry: pill CTAs, sharp flat cards, no shadows (hairline dividers only).
+  Raw brand tokens live as --ink/--soft-cloud/--sale/... and map onto shadcn's
+  semantic tokens below; extras are exposed as Tailwind utilities.
 */
 @theme inline {
   --font-sans: var(--font-inter);
-  --font-heading: var(--font-manrope);
+  --font-heading: var(--font-inter);
+  --font-display: var(--font-bebas);
   --font-mono: var(--font-geist-mono);
 
   /* shadcn semantic tokens */
@@ -51,135 +53,136 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Wise brand extensions — exposed as bg- and text- utilities */
-  --color-canvas: var(--canvas);
-  --color-canvas-soft: var(--canvas-soft);
+  /* Nike brand extensions — exposed as bg- and text- utilities */
   --color-ink: var(--ink);
-  --color-ink-deep: var(--ink-deep);
-  --color-on-primary: var(--on-primary);
-  --color-primary-pale: var(--primary-pale);
-  --color-primary-active: var(--primary-active);
-  --color-primary-neutral: var(--primary-neutral);
-  --color-positive: var(--positive);
-  --color-positive-deep: var(--positive-deep);
-  --color-warning: var(--warning);
-  --color-warning-deep: var(--warning-deep);
-  --color-warning-content: var(--warning-content);
-  --color-negative: var(--negative);
-  --color-negative-deep: var(--negative-deep);
-  --color-negative-darkest: var(--negative-darkest);
-  --color-negative-bg: var(--negative-bg);
-  --color-accent-orange: var(--accent-orange);
-  --color-accent-cyan: var(--accent-cyan);
+  --color-canvas: var(--canvas);
+  --color-soft-cloud: var(--soft-cloud);
+  --color-charcoal: var(--charcoal);
+  --color-ash: var(--ash);
+  --color-mute: var(--mute);
+  --color-stone: var(--stone);
+  --color-hairline: var(--hairline);
+  --color-hairline-soft: var(--hairline-soft);
+  --color-sale: var(--sale);
+  --color-sale-deep: var(--sale-deep);
+  --color-success: var(--success);
+  --color-success-bright: var(--success-bright);
+  --color-info: var(--info);
+  --color-info-deep: var(--info-deep);
+  --color-accent-pink: var(--accent-pink);
+  --color-accent-pink-soft: var(--accent-pink-soft);
+  --color-accent-purple-soft: var(--accent-purple-soft);
+  --color-accent-purple-pale: var(--accent-purple-pale);
+  --color-accent-teal: var(--accent-teal);
+  --color-accent-pink-deep: var(--accent-pink-deep);
 
-  /* Radius — Wise scale (24px is the canonical card/button radius) */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-2xl: 32px;
-  --radius-3xl: 40px;
-  --radius-4xl: 48px;
+  /* Radius — modest for misc chrome; pills + sharp cards are set per-component */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-4xl: 9999px;
 }
 
 :root {
-  --radius: 1rem; /* 16px — the lg base; xl (24px) is the brand canonical */
+  --radius: 0.5rem; /* 8px base */
 
-  /* ── Wise raw palette (DESIGN.md) ── */
+  /* ── Nike raw palette (nike/DESIGN.md) ── */
+  --ink: #111111;
   --canvas: #ffffff;
-  --canvas-soft: #e8ebe6;
-  --ink: #0e0f0c;
-  --ink-deep: #163300;
-  --on-primary: #0e0f0c;
-  --primary-pale: #e2f6d5;
-  --primary-active: #cdffad;
-  --primary-neutral: #c5edab;
-  --positive: #2ead4b;
-  --positive-deep: #054d28;
-  --warning: #ffd11a;
-  --warning-deep: #b86700;
-  --warning-content: #4a3b1c;
-  --negative: #d03238;
-  --negative-deep: #a72027;
-  --negative-darkest: #a7000d;
-  --negative-bg: #320707;
-  --accent-orange: #ffc091;
-  --accent-cyan: #38c8ff;
+  --soft-cloud: #f5f5f5;
+  --charcoal: #39393b;
+  --ash: #4b4b4d;
+  --mute: #707072;
+  --stone: #9e9ea0;
+  --hairline: #cacacb;
+  --hairline-soft: #e5e5e5;
+  --sale: #d30005;
+  --sale-deep: #780700;
+  --success: #007d48;
+  --success-bright: #1eaa52;
+  --info: #1151ff;
+  --info-deep: #0034e3;
+  --accent-pink: #ed1aa0;
+  --accent-pink-soft: #ffb0dd;
+  --accent-purple-soft: #beaffd;
+  --accent-purple-pale: #d6d1ff;
+  --accent-teal: #0a7281;
+  --accent-pink-deep: #4c012d;
 
   /* ── shadcn semantic mapping ── */
-  --background: #e8ebe6; /* sage canvas-soft — the brand mood */
-  --foreground: #0e0f0c; /* ink */
-  --card: #ffffff; /* white cards float on the sage canvas */
-  --card-foreground: #0e0f0c;
+  --background: #ffffff; /* canvas — Nike pages are white */
+  --foreground: #111111; /* ink */
+  --card: #ffffff;
+  --card-foreground: #111111;
   --popover: #ffffff;
-  --popover-foreground: #0e0f0c;
-  --primary: #9fe870; /* lime — the one accent */
-  --primary-foreground: #0e0f0c; /* INK on lime (not white) — the inversion */
-  --secondary: #d6dbce; /* low-emphasis sage button */
-  --secondary-foreground: #0e0f0c;
-  --muted: #dde2d7; /* subtle sage fill (icon tiles, etc.) */
-  --muted-foreground: #646763; /* secondary text */
-  --accent: #e2f6d5; /* primary-pale — branded hover */
-  --accent-foreground: #0e0f0c;
-  --destructive: #d03238; /* negative */
-  --border: #d6dbd0; /* sage hairline */
-  --input: #c9cfc1;
-  --ring: #9fe870; /* branded focus */
+  --popover-foreground: #111111;
+  --primary: #111111; /* ink — the black CTA, the brand's only "color" */
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5; /* soft-cloud */
+  --secondary-foreground: #111111;
+  --muted: #f5f5f5; /* soft-cloud — the product "studio" gray */
+  --muted-foreground: #707072; /* mute */
+  --accent: #f5f5f5;
+  --accent-foreground: #111111;
+  --destructive: #d30005; /* sale red */
+  --border: #e5e5e5; /* hairline-soft */
+  --input: #cacacb; /* hairline */
+  --ring: #111111; /* ink focus */
 
-  --chart-1: #9fe870;
-  --chart-2: #38c8ff;
-  --chart-3: #ffc091;
-  --chart-4: #ffd11a;
-  --chart-5: #2ead4b;
+  --chart-1: #111111;
+  --chart-2: #707072;
+  --chart-3: #007d48;
+  --chart-4: #1151ff;
+  --chart-5: #d30005;
 
   --sidebar: #ffffff;
-  --sidebar-foreground: #0e0f0c;
-  --sidebar-primary: #9fe870;
-  --sidebar-primary-foreground: #0e0f0c;
-  --sidebar-accent: #e2f6d5;
-  --sidebar-accent-foreground: #0e0f0c;
-  --sidebar-border: #d6dbd0;
-  --sidebar-ring: #9fe870;
+  --sidebar-foreground: #111111;
+  --sidebar-primary: #111111;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #111111;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #111111;
 }
 
-/*
-  Dark mode is a placeholder for now (mirrors light) — the toggle stays wired but
-  DESIGN.md is light-first. Author a real dark palette here later.
-*/
+/* Dark mode is a placeholder for now (mirrors light); Nike is light-first. */
 .dark {
-  --background: #e8ebe6;
-  --foreground: #0e0f0c;
+  --background: #ffffff;
+  --foreground: #111111;
   --card: #ffffff;
-  --card-foreground: #0e0f0c;
+  --card-foreground: #111111;
   --popover: #ffffff;
-  --popover-foreground: #0e0f0c;
-  --primary: #9fe870;
-  --primary-foreground: #0e0f0c;
-  --secondary: #d6dbce;
-  --secondary-foreground: #0e0f0c;
-  --muted: #dde2d7;
-  --muted-foreground: #646763;
-  --accent: #e2f6d5;
-  --accent-foreground: #0e0f0c;
-  --destructive: #d03238;
-  --border: #d6dbd0;
-  --input: #c9cfc1;
-  --ring: #9fe870;
+  --popover-foreground: #111111;
+  --primary: #111111;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #111111;
+  --muted: #f5f5f5;
+  --muted-foreground: #707072;
+  --accent: #f5f5f5;
+  --accent-foreground: #111111;
+  --destructive: #d30005;
+  --border: #e5e5e5;
+  --input: #cacacb;
+  --ring: #111111;
 
-  --chart-1: #9fe870;
-  --chart-2: #38c8ff;
-  --chart-3: #ffc091;
-  --chart-4: #ffd11a;
-  --chart-5: #2ead4b;
+  --chart-1: #111111;
+  --chart-2: #707072;
+  --chart-3: #007d48;
+  --chart-4: #1151ff;
+  --chart-5: #d30005;
 
   --sidebar: #ffffff;
-  --sidebar-foreground: #0e0f0c;
-  --sidebar-primary: #9fe870;
-  --sidebar-primary-foreground: #0e0f0c;
-  --sidebar-accent: #e2f6d5;
-  --sidebar-accent-foreground: #0e0f0c;
-  --sidebar-border: #d6dbd0;
-  --sidebar-ring: #9fe870;
+  --sidebar-foreground: #111111;
+  --sidebar-primary: #111111;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #111111;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #111111;
 }
 
 @layer base {
@@ -188,7 +191,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "calt";
   }
   html {
     @apply font-sans;
@@ -196,66 +198,35 @@
 }
 
 /*
-  Typography scale (DESIGN.md §Typography). One utility per token, encoding
-  family + size + weight + line-height + tracking. Manrope is the Wise Sans
-  substitute for heavy displays (weight 800 = its ceiling, standing in for the
-  spec's 900); Inter carries sub-displays and body. The largest displays are
-  fluid (clamp) so 126px never overflows on mobile.
+  Typography scale (nike/DESIGN.md §Typography). Extreme two-tier contrast:
+  one towering uppercase display tier (Bebas Neue, Futura ND substitute) and a
+  quiet Inter (Helvetica Now substitute) UI tier carrying everything else.
 */
-@utility display-mega {
-  font-family: var(--font-heading);
-  font-size: clamp(2.75rem, 11vw, 7.875rem);
-  font-weight: 800;
-  line-height: 0.85;
-  letter-spacing: -0.02em;
-}
-@utility display-xxl {
-  font-family: var(--font-heading);
-  font-size: clamp(2.5rem, 9vw, 6rem);
-  font-weight: 800;
-  line-height: 0.85;
-  letter-spacing: -0.02em;
-}
-@utility display-xl {
-  font-family: var(--font-heading);
-  font-size: clamp(2.25rem, 6vw, 4rem);
-  font-weight: 800;
-  line-height: 0.86;
-  letter-spacing: -0.015em;
-}
-@utility display-lg {
-  font-family: var(--font-heading);
-  font-size: clamp(2rem, 4.5vw, 2.9375rem);
+@utility display-campaign {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 9vw, 6rem);
   font-weight: 400;
-  line-height: 1.2;
-  letter-spacing: -0.005em;
-}
-@utility display-md {
-  font-family: var(--font-heading);
-  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-  font-weight: 800;
   line-height: 0.9;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
-@utility display-sm {
-  font-family: var(--font-sans);
-  font-size: 2rem;
-  font-weight: 600;
+@utility heading-xl {
+  font-family: var(--font-heading);
+  font-size: clamp(1.75rem, 4vw, 2rem);
+  font-weight: 500;
   line-height: 1.2;
-  letter-spacing: -0.03em;
 }
-@utility display-xs {
-  font-family: var(--font-sans);
+@utility heading-lg {
+  font-family: var(--font-heading);
   font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.02em;
+  font-weight: 500;
+  line-height: 1.2;
 }
-@utility body-lg {
-  font-family: var(--font-sans);
-  font-size: 1.25rem;
-  font-weight: 400;
-  line-height: 1.5;
+@utility heading-md {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.75;
 }
 @utility body-md {
   font-family: var(--font-sans);
@@ -263,27 +234,34 @@
   font-weight: 400;
   line-height: 1.5;
 }
-@utility body-md-strong {
+@utility body-strong {
   font-family: var(--font-sans);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.5;
 }
-@utility body-sm {
+@utility caption-md {
   font-family: var(--font-sans);
   font-size: 0.875rem;
-  font-weight: 400;
-  line-height: 1.43;
+  font-weight: 500;
+  line-height: 1.5;
 }
-@utility body-sm-strong {
-  font-family: var(--font-sans);
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1.43;
-}
-@utility caption {
+@utility caption-sm {
   font-family: var(--font-sans);
   font-size: 0.75rem;
-  font-weight: 400;
-  line-height: 1.33;
+  font-weight: 500;
+  line-height: 1.5;
+}
+@utility utility-xs {
+  font-family: var(--font-sans);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  line-height: 1.75;
+}
+@utility link-md {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.75;
+  text-decoration: underline;
 }

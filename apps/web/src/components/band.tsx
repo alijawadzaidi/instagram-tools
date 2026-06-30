@@ -4,20 +4,20 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 /**
- * A full-bleed page band with a centered marketing container (DESIGN.md
- * hero-band / hero-band-dark / content-band). Surface contrast between
- * consecutive bands (sage → white → dark) is the Wise page rhythm.
+ * A full-bleed page band with a centered content container (nike/DESIGN.md).
+ * Nike stacks flat sections at a 48px rhythm — white canvas, soft-cloud gray,
+ * and ink (black) campaign/member blocks. No radius, no shadow.
  */
 const bandVariants = cva("w-full px-6 py-12 md:py-16", {
   variants: {
     variant: {
-      sage: "bg-canvas-soft text-foreground",
-      white: "bg-card text-foreground",
-      dark: "bg-ink text-primary",
+      white: "bg-canvas text-ink",
+      soft: "bg-soft-cloud text-ink",
+      dark: "bg-ink text-canvas",
     },
   },
   defaultVariants: {
-    variant: "sage",
+    variant: "white",
   },
 });
 

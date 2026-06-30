@@ -14,7 +14,9 @@ export default function HomePage() {
   return (
     <div className="mx-auto w-full max-w-5xl">
       <div className="mb-6">
-        <h1 className="display-sm">Your Instagram toolset</h1>
+        <h1 className="heading-xl tracking-tight uppercase">
+          Your Instagram toolset
+        </h1>
         <p className="body-md text-muted-foreground mt-1">
           Pick a tool to get started. More are on the way.
         </p>
@@ -38,8 +40,8 @@ export default function HomePage() {
                     <ArrowRight className="text-muted-foreground size-4 transition-transform group-hover:translate-x-0.5" />
                   )}
                 </div>
-                <CardTitle className="display-xs mt-3">{tool.name}</CardTitle>
-                <CardDescription className="body-sm">
+                <CardTitle className="heading-md mt-3">{tool.name}</CardTitle>
+                <CardDescription className="caption-md">
                   {tool.description}
                 </CardDescription>
               </CardHeader>
