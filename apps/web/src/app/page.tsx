@@ -19,7 +19,7 @@ export default function LandingPage() {
     <div className="flex min-h-svh flex-col">
       <header className="flex h-14 shrink-0 items-center gap-2 px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-tr from-fuchsia-500 to-amber-400 text-white">
+          <span className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Camera className="size-4" />
           </span>
           <span className="font-semibold">Instagram Tools</span>

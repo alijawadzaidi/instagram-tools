@@ -77,7 +77,7 @@ export function RankingView() {
                   </span>
                   <span
                     className={`flex shrink-0 items-center gap-1 text-sm font-medium tabular-nums ${
-                      aboveAvg ? "text-green-600 dark:text-green-500" : ""
+                      aboveAvg ? "text-positive" : ""
                     }`}
                   >
                     <Eye className="size-3.5" />

@@ -12,7 +12,7 @@ export default function SignInPage() {
   return (
     <div className="w-full max-w-sm space-y-8 px-4">
       <div className="flex flex-col items-center gap-3">
-        <div className="bg-gradient-to-tr from-fuchsia-500 to-amber-400 text-white flex size-12 items-center justify-center rounded-xl">
+        <div className="bg-primary text-primary-foreground flex size-12 items-center justify-center rounded-xl">
           <Camera className="size-6" />
         </div>
         <div className="text-center">
