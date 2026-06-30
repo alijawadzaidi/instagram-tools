@@ -14,8 +14,8 @@ export default function HomePage() {
   return (
     <div className="mx-auto w-full max-w-5xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Your Instagram toolset</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <h1 className="display-xs">Your Instagram toolset</h1>
+        <p className="body-sm text-muted-foreground mt-1">
           Pick a tool to get started. More are on the way.
         </p>
       </div>

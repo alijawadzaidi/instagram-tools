@@ -194,3 +194,96 @@
     @apply font-sans;
   }
 }
+
+/*
+  Typography scale (DESIGN.md §Typography). One utility per token, encoding
+  family + size + weight + line-height + tracking. Manrope is the Wise Sans
+  substitute for heavy displays (weight 800 = its ceiling, standing in for the
+  spec's 900); Inter carries sub-displays and body. The largest displays are
+  fluid (clamp) so 126px never overflows on mobile.
+*/
+@utility display-mega {
+  font-family: var(--font-heading);
+  font-size: clamp(2.75rem, 11vw, 7.875rem);
+  font-weight: 800;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+}
+@utility display-xxl {
+  font-family: var(--font-heading);
+  font-size: clamp(2.5rem, 9vw, 6rem);
+  font-weight: 800;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+}
+@utility display-xl {
+  font-family: var(--font-heading);
+  font-size: clamp(2.25rem, 6vw, 4rem);
+  font-weight: 800;
+  line-height: 0.86;
+  letter-spacing: -0.015em;
+}
+@utility display-lg {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 4.5vw, 2.9375rem);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+}
+@utility display-md {
+  font-family: var(--font-heading);
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+}
+@utility display-sm {
+  font-family: var(--font-sans);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+@utility display-xs {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+@utility body-lg {
+  font-family: var(--font-sans);
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+@utility body-md {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+@utility body-md-strong {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+@utility body-sm {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.43;
+}
+@utility body-sm-strong {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.43;
+}
+@utility caption {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.33;
+}

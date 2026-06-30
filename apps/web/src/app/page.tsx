@@ -36,10 +36,10 @@ export default function LandingPage() {
           <Badge variant="secondary" className="mb-5">
             {liveCount} tools live · no login required
           </Badge>
-          <h1 className="mx-auto max-w-3xl text-balance text-4xl font-semibold tracking-tight md:text-6xl">
+          <h1 className="display-xl mx-auto max-w-3xl text-balance">
             The Instagram toolset for creators
           </h1>
-          <p className="text-muted-foreground mx-auto mt-5 max-w-2xl text-pretty text-base md:text-lg">
+          <p className="body-lg text-muted-foreground mx-auto mt-5 max-w-2xl text-pretty">
             Transcribe reels, analyze profiles, download covers, and more — built
             on transcripts nobody else exposes. Paste a link and go.
           </p>
@@ -68,10 +68,8 @@ export default function LandingPage() {
           className="mx-auto w-full max-w-5xl px-4 pb-24 md:px-6"
         >
           <div className="mb-6">
-            <h2 className="text-xl font-semibold tracking-tight">
-              Everything in the box
-            </h2>
-            <p className="text-muted-foreground mt-1 text-sm">
+            <h2 className="display-xs">Everything in the box</h2>
+            <p className="body-sm text-muted-foreground mt-1">
               Each tool runs on its own — pick one to get started.
             </p>
           </div>
