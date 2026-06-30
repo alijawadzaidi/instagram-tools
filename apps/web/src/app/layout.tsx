@@ -36,11 +36,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        suppressHydrationWarning
-        className={`${inter.variable} ${bebas.variable} ${geistMono.variable} min-h-svh antialiased`}
-      >
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${bebas.variable} ${geistMono.variable}`}
+    >
+      <body suppressHydrationWarning className="min-h-svh antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
