@@ -26,7 +26,7 @@ export const tools: ToolMeta[] = [
   exportMeta,
 ];
 
-export const toolHref = (slug: string) => `/tools/${slug}`;
+export const toolHref = (slug: string) => `/dashboard/tools/${slug}`;
 
 export const getTool = (slug: string): ToolMeta | undefined =>
   tools.find((t) => t.slug === slug);

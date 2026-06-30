@@ -64,8 +64,9 @@ changes when it's installed (`brew install gitleaks`); it's a no-op otherwise.
 ```
 apps/web/src/
 ├── app/                         # ROUTING ONLY — no business logic, no fetch
+│   ├── page.tsx                 # public landing page (/) — hero + tool showcase
 │   ├── (auth)/sign-in/          # better-auth Google sign-in
-│   ├── (dashboard)/
+│   ├── dashboard/               # the app, gated by middleware
 │   │   ├── page.tsx             # home grid (renders from features/registry)
 │   │   ├── layout.tsx           # sidebar + header
 │   │   └── tools/<slug>/page.tsx# ~7-line shell: metadata + <SlugView/>
@@ -124,7 +125,7 @@ apps/web/src/features/<slug>/        apps/api/app/tools/<slug>/
 ├── components/<slug>-view.tsx       ├── service.py   product logic
 ├── queries.ts   data hooks          └── router.py    thin transport (auto-discovered)
 └── index.ts     exports
-apps/web/src/app/(dashboard)/tools/<slug>/page.tsx   ~7-line server shell
+apps/web/src/app/dashboard/tools/<slug>/page.tsx   ~7-line server shell
 ```
 
 **Backend granularity is per-capability, not 1:1 with the UI.** A frontend tool
@@ -145,7 +146,7 @@ pnpm quick-check
 `pnpm new-tool` creates and wires everything:
 - backend `tools/best_time/{__init__,schemas,service,router}.py`
 - frontend `features/best_time/{meta,queries,components/best_time-view,index}.ts(x)`
-- route `app/(dashboard)/tools/best_time/page.tsx`
+- route `app/dashboard/tools/best_time/page.tsx`
 - registers `bestTimeMeta` in `features/registry.ts`
 
 Then you: implement `service.py`, flesh out the view, pick an icon in `meta.ts`.

@@ -15,6 +15,10 @@ const SESSION_TTL_MS = 60 * 1000;
 const sessionCache = new Map<string, { userId: string; expires: number }>();
 
 async function getUserId(request: NextRequest): Promise<string | null> {
+  // TEMP: auth bypassed in development for local browsing (no DB / OAuth needed).
+  // Production still resolves the real session. Delete this line to require it in dev.
+  if (process.env.NODE_ENV !== "production") return "dev-user";
+
   const cookie = request.headers.get("cookie");
   if (!cookie) return null;
 

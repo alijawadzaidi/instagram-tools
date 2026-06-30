@@ -236,7 +236,7 @@ export { ${pascal}View } from "./components/${slug}-view";
 );
 
 write(
-  path.join(WEB, "app/(dashboard)/tools", slug, "page.tsx"),
+  path.join(WEB, "app/dashboard/tools", slug, "page.tsx"),
   `import type { Metadata } from "next";
 
 import { ${pascal}View, meta } from "@/features/${slug}";

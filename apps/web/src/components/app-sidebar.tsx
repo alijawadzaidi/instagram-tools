@@ -38,7 +38,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" tooltip="Instagram Tools" render={<Link href="/" />}>
+            <SidebarMenuButton size="lg" tooltip="Instagram Tools" render={<Link href="/dashboard" />}>
               <div className="bg-gradient-to-tr from-fuchsia-500 to-amber-400 text-white flex aspect-square size-8 items-center justify-center rounded-lg">
                 <Camera className="size-4" />
               </div>
