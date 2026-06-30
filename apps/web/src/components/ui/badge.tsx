@@ -19,6 +19,9 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
+        // Wise semantic status pills (DESIGN.md badge-positive / badge-negative)
+        positive: "bg-primary-pale text-positive-deep font-semibold",
+        negative: "bg-negative-bg text-white font-semibold",
       },
     },
     defaultVariants: {

@@ -33,7 +33,7 @@ export default function LandingPage() {
       <main className="flex flex-1 flex-col">
         {/* Hero */}
         <section className="mx-auto w-full max-w-5xl px-4 py-20 text-center md:px-6 md:py-28">
-          <Badge variant="secondary" className="mb-5">
+          <Badge variant="positive" className="mb-5">
             {liveCount} tools live · no login required
           </Badge>
           <h1 className="display-xl mx-auto max-w-3xl text-balance">
@@ -53,7 +53,7 @@ export default function LandingPage() {
             </Button>
             <Button
               size="lg"
-              variant="outline"
+              variant="tertiary"
               className="h-10 px-5 text-sm"
               render={<Link href="#tools" />}
             >
