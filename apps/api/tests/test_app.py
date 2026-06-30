@@ -3,6 +3,7 @@ handler, and the internal-key dependency."""
 
 import asyncio
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.core.auth import current_user_id, require_internal_key
@@ -68,3 +69,18 @@ def test_require_internal_key_noop_when_bypassed(monkeypatch):
     monkeypatch.setattr(settings, "environment", "development")
     # would normally raise (no header / no configured key); bypass lets it pass
     assert asyncio.run(require_internal_key(None)) is None
+
+
+def test_validate_required_relaxed_when_bypassed():
+    # bypassed: no DB, no internal key -> startup still allowed (no-infra dev mode)
+    Settings(
+        auth_disabled=True,
+        environment="development",
+        database_url="",
+        internal_api_key="",
+    ).validate_required()
+    # not bypassed: DB + internal key are still required
+    with pytest.raises(RuntimeError):
+        Settings(
+            auth_disabled=False, database_url="", internal_api_key=""
+        ).validate_required()

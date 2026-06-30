@@ -67,9 +67,11 @@ class Settings(BaseSettings):
         """Fail fast at startup with one clear message instead of crashing
         mid-request with a stack trace nobody can act on."""
         missing = []
-        if not self.database_url:
+        # When auth is bypassed (no-infra dev mode) the internal key is unused and
+        # the DB is optional — the no-login tools don't touch Postgres; only the
+        # job-based tools do, and they'll fail clearly at call time without it.
+        if not self.database_url and not self.auth_bypassed:
             missing.append("DATABASE_URL")
-        # When auth is bypassed the internal key is unused, so don't require it.
         if not self.internal_api_key and not self.auth_bypassed:
             missing.append("INTERNAL_API_KEY")
         if self.transcribe_engine == "openai" and not self.openai_api_key:

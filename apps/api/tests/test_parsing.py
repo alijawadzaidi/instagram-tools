@@ -91,7 +91,9 @@ class TestSelector:
 
 class TestSettingsValidation:
     def test_missing_required_raises(self):
-        s = Settings(database_url="", internal_api_key="")
+        # auth_disabled=False explicitly: the bypass relaxes these requirements,
+        # and a local .env may set AUTH_DISABLED=true.
+        s = Settings(database_url="", internal_api_key="", auth_disabled=False)
         with pytest.raises(RuntimeError) as e:
             s.validate_required()
         assert "DATABASE_URL" in str(e.value)
