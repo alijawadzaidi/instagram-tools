@@ -46,7 +46,7 @@ export function UsernameSearchForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{cardTitle}</CardTitle>
+        <CardTitle className="heading-md">{cardTitle}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>

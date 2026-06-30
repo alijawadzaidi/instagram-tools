@@ -24,12 +24,12 @@ export function ToolPageShell({
   return (
     <div className={cn("mx-auto w-full", className)}>
       <div className="mb-6 flex items-center gap-3">
-        <div className="bg-muted flex size-10 items-center justify-center rounded-lg">
-          <Icon className="size-5" />
+        <div className="bg-soft-cloud flex size-10 items-center justify-center">
+          <Icon className="size-5" strokeWidth={1.5} />
         </div>
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-          <p className="text-muted-foreground text-sm">{description}</p>
+          <h1 className="heading-lg tracking-tight uppercase">{title}</h1>
+          <p className="caption-md text-muted-foreground">{description}</p>
         </div>
       </div>
       {children}
